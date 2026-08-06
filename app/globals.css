@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,500;0,600;0,700;1,400&family=DM+Sans:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Syne:wght@400;500;600;700&display=swap");
 @import "tailwindcss";
 
 :root {
@@ -9,8 +9,8 @@
   --coral: #08bdea;
   --blue: #08bdea;
   --line: rgba(255, 255, 255, .18);
-  --font-sans: "DM Sans", Arial, Helvetica, sans-serif;
-  --font-display: "Crimson Pro", Georgia, "Times New Roman", serif;
+  --font-sans: "Inter", Arial, Helvetica, sans-serif;
+  --font-display: "Syne", "Inter", Arial, Helvetica, sans-serif;
 }
 
 * { box-sizing: border-box; }
