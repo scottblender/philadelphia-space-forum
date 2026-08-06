@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,400;0,600;0,700;1,400;1,600&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Syne:wght@400;500;600;700&display=swap");
 @import "tailwindcss";
 
 :root {
@@ -9,7 +9,8 @@
   --coral: #08bdea;
   --blue: #08bdea;
   --line: rgba(255, 255, 255, .18);
-  --font-sans: "Open Sans", Arial, Helvetica, sans-serif;
+  --font-sans: "Inter", Arial, Helvetica, sans-serif;
+  --font-display: "Syne", "Inter", Arial, Helvetica, sans-serif;
 }
 
 * { box-sizing: border-box; }
@@ -48,7 +49,7 @@ button, input { font: inherit; }
 .eyebrow { margin: 0 0 28px; display: flex; align-items: center; gap: 10px; text-transform: uppercase; letter-spacing: .2em; font-size: 11px; font-weight: 700; }
 .eyebrow span { width: 28px; height: 1px; background: var(--coral); }
 .eyebrow-light { color: rgba(255,255,255,.72); }
-.hero-copy h1, .intro-section h2, .join-section h2 { margin: 0; font-family: var(--font-sans); font-weight: 400; line-height: .83; letter-spacing: -.055em; }
+.hero-copy h1, .intro-section h2, .join-section h2 { margin: 0; font-family: var(--font-display); font-weight: 400; line-height: .83; letter-spacing: -.055em; }
 .hero-copy h1 { font-size: clamp(58px, min(8.2vw, 10.8svh), 116px); }
 .hero-lede { max-width: 620px; margin: clamp(20px, 3.8svh, 38px) 0 0 5px; font-family: var(--font-sans); font-size: clamp(16px, 2.2svh, 19px); line-height: 1.55; color: rgba(255,255,255,.82); }
 .hero-actions { margin-top: clamp(22px, 3.8svh, 38px); display: flex; align-items: center; gap: 32px; }
@@ -93,7 +94,7 @@ h2 em { color: var(--coral); font-weight: 400; }
 .graphic-03::before { width: 115px; height: 115px; border: 1px solid rgba(255,255,255,.55); transform: rotate(45deg); }
 .graphic-03::after { width: 48px; height: 48px; border: 1px solid var(--coral); border-radius: 50%; }
 .graphic-03 i { width: 6px; height: 6px; background: white; border-radius: 50%; box-shadow: 50px 30px white, -46px -35px rgba(255,255,255,.5); }
-.theme-card h3 { margin: 0 0 15px; font-family: var(--font-sans); font-size: 25px; font-weight: 400; }
+.theme-card h3 { margin: 0 0 15px; font-family: var(--font-display); font-size: 25px; font-weight: 400; }
 .theme-card p { margin: 0; max-width: 250px; color: rgba(255,255,255,.62); font-family: var(--font-sans); line-height: 1.55; }
 
 .join-section { min-height: calc(100svh - 84px); min-height: calc(100dvh - 84px); position: relative; display: flex; align-items: center; padding: clamp(78px, 10svh, 110px) 0 clamp(104px, 14svh, 145px); background: rgba(31, 34, 37, .92); color: white; }
@@ -113,7 +114,7 @@ h2 em { color: var(--coral); font-weight: 400; }
 .form-error { color: #9b382a; }
 
 .inner-hero, .calendar-hero { padding: 100px 0 88px; display: grid; grid-template-columns: 1.2fr .8fr; align-items: end; gap: 90px; border-bottom: 1px solid var(--line); }
-.inner-hero h1, .calendar-hero h1, .editor-intro h1 { margin: 0; font-family: var(--font-sans); font-size: clamp(56px, 7.4vw, 94px); line-height: .9; letter-spacing: -.055em; font-weight: 400; }
+.inner-hero h1, .calendar-hero h1, .editor-intro h1 { margin: 0; font-family: var(--font-display); font-size: clamp(56px, 7.4vw, 94px); line-height: .9; letter-spacing: -.055em; font-weight: 400; }
 .inner-hero h1 em, .calendar-hero h1 em, .editor-intro h1 em { color: var(--coral); font-weight: 400; }
 .inner-hero-aside { max-width: 390px; justify-self: end; }
 .inner-hero-aside p { font-family: var(--font-sans); font-size: 17px; line-height: 1.6; margin: 0 0 28px; }
@@ -135,7 +136,7 @@ h2 em { color: var(--coral); font-weight: 400; }
 .event-art-community { background: #3f5f8b; }
 .event-card-body { padding: 42px 48px; display: flex; flex-direction: column; align-items: flex-start; }
 .event-meta { width: 100%; display: flex; justify-content: space-between; gap: 20px; font-size: 8px; letter-spacing: .18em; text-transform: uppercase; color: rgba(21,22,63,.55); }
-.event-card h2 { margin: 40px 0 12px; font-family: var(--font-sans); font-size: clamp(34px, 4.5vw, 58px); line-height: .95; font-weight: 400; letter-spacing: -.035em; }
+.event-card h2 { margin: 40px 0 12px; font-family: var(--font-display); font-size: clamp(34px, 4.5vw, 58px); line-height: .95; font-weight: 400; letter-spacing: -.035em; }
 .event-date { margin: 6px 0; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; }
 .event-location { margin: 0 0 24px; font-size: 11px; color: rgba(21,22,63,.6); }
 .event-synopsis { max-width: 650px; margin: 0 0 17px; font-family: var(--font-sans); font-size: 16px; line-height: 1.6; color: rgba(21,22,63,.78); }
@@ -148,7 +149,7 @@ h2 em { color: var(--coral); font-weight: 400; }
 .calendar-layout { display: grid; grid-template-columns: 1.45fr .55fr; border: 1px solid var(--line); background: #f8f4ec; }
 .calendar-panel { padding: 34px; border-right: 1px solid var(--line); }
 .calendar-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 32px; }
-.calendar-toolbar h2 { margin: 0; font-family: var(--font-sans); font-size: 30px; font-weight: 400; }
+.calendar-toolbar h2 { margin: 0; font-family: var(--font-display); font-size: 30px; font-weight: 400; }
 .calendar-toolbar button { width: 38px; height: 38px; border: 1px solid var(--line); border-radius: 50%; background: transparent; cursor: pointer; }
 .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); }
 .calendar-days { border-bottom: 1px solid var(--line); }
@@ -166,7 +167,7 @@ h2 em { color: var(--coral); font-weight: 400; }
 .agenda-heading b { color: var(--coral); font-size: 18px; }
 .calendar-agenda article { padding-top: 55px; }
 .calendar-agenda article > p:first-child { font-size: 8px; text-transform: uppercase; letter-spacing: .15em; color: rgba(255,255,255,.5); }
-.calendar-agenda h3 { margin: 20px 0 30px; font-family: var(--font-sans); font-size: 36px; line-height: 1; font-weight: 400; }
+.calendar-agenda h3 { margin: 20px 0 30px; font-family: var(--font-display); font-size: 36px; line-height: 1; font-weight: 400; }
 .calendar-agenda time, .agenda-location { display: block; font-size: 10px; line-height: 1.6; }
 .agenda-location { color: rgba(255,255,255,.55); }
 .agenda-copy { margin: 30px 0; font-family: var(--font-sans); font-size: 14px; line-height: 1.6; color: rgba(255,255,255,.7); }
@@ -198,7 +199,7 @@ h2 em { color: var(--coral); font-weight: 400; }
 .coming-soon-shell { position: relative; min-height: 760px; padding-top: 84px; overflow: hidden; background: transparent; }
 .coming-soon-shell::after { display: none; }
 .coming-soon-content { position: relative; z-index: 2; min-height: 675px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; padding-bottom: 55px; }
-.coming-soon-content h1 { margin: 0; font-family: var(--font-sans); font-size: clamp(84px, 12vw, 170px); line-height: .75; letter-spacing: -.065em; font-weight: 400; }
+.coming-soon-content h1 { margin: 0; font-family: var(--font-display); font-size: clamp(84px, 12vw, 170px); line-height: .75; letter-spacing: -.065em; font-weight: 400; }
 .coming-soon-content h1 em { color: var(--coral); font-weight: 400; }
 .coming-soon-content > p:not(.eyebrow) { max-width: 500px; margin: 42px 0 30px; font-family: var(--font-sans); font-size: 18px; line-height: 1.6; color: rgba(255,255,255,.72); }
 .soon-orbit { position: absolute; z-index: 1; border: 1px solid rgba(255,255,255,.18); border-radius: 50%; }
