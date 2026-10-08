@@ -6,7 +6,7 @@ export function TeamMember({ member }: { member: TeamMemberData }) {
   return (
     <article className="team-member" aria-labelledby={`${member.id}-name`}>
       <div className="team-photo">
-        <Image src={publicAsset(member.photo)} alt={member.name} width={800} height={800} unoptimized style={{ objectPosition: member.photoPosition ?? "center" }} />
+        <Image src={publicAsset(member.photo)} alt={member.name} width={800} height={800} unoptimized style={{ objectPosition: member.photoPosition ?? "center", transform: member.photoZoom ? `scale(${member.photoZoom})` : undefined, transformOrigin: member.photoZoom ? "center bottom" : undefined }} />
       </div>
       <div className="team-copy">
         <p className="eyebrow"><span /> {member.role}</p>
