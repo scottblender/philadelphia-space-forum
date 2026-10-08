@@ -25,7 +25,7 @@
 section, footer { scroll-margin-top: var(--header-height); }
 body { min-height: 100vh; margin: 0; position: relative; background: var(--space-black); color: var(--ink); font-family: var(--font-sans); }
 .starfield { position: fixed; inset: 0; z-index: 0; pointer-events: none; background-repeat: repeat; background-size: 640px 640px; opacity: .75; }
-.route-transition { position: relative; z-index: 1; min-height: 100vh; animation: route-fade-in .3s ease-out backwards; }
+.route-transition { position: relative; z-index: 1; min-height: 100vh; min-height: 100dvh; animation: route-fade-in .3s ease-out backwards; }
 .route-transition.is-fading-out { opacity: 0; pointer-events: none; animation: none; transition: opacity .17s ease-in; }
 a { color: inherit; text-decoration: none; }
 button, input { font: inherit; }
@@ -89,7 +89,8 @@ h2 em { color: var(--cyan-blue); font-weight: inherit; font-style: normal; }
 .join-card small { display: block; margin-top: 18px; font-size: 12px; color: var(--silver-gray); }
 .instagram-button { margin-top: 16px; }
 
-.inner-page { padding-top: var(--header-height); }
+.inner-page { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; padding-top: var(--header-height); }
+.inner-page > .site-footer { margin-top: auto; }
 .inner-hero { padding: 90px 0 70px; display: grid; grid-template-columns: 1.2fr .8fr; align-items: end; gap: 90px; border-bottom: 1px solid var(--line); }
 .inner-hero h1 { margin: 0; font-size: clamp(56px, 7.4vw, 94px); line-height: 1; letter-spacing: -.055em; font-weight: 500; }
 .inner-hero-aside { max-width: 390px; justify-self: end; font-size: 17px; line-height: 1.65; margin: 0; color: var(--silver-gray); }
