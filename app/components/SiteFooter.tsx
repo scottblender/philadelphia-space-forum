@@ -10,8 +10,9 @@ export function SiteFooter() {
         </Link>
         <p>Building a bigger space community,<br />right here in Philadelphia.</p>
         <div className="footer-links">
-          <Link href="/calendar">Calendar</Link>
-          <a href="https://substack.com/@philadelphiaspaceforum" target="_blank" rel="noreferrer">Newsletter ↗</a>
+          <Link href="/about">About us</Link>
+          <Link href="/events">Events</Link>
+          <a href="https://www.instagram.com/philadelphiaspaceforum/" target="_blank" rel="noreferrer">Instagram ↗</a>
         </div>
       </div>
       <div className="page-width footer-bottom">

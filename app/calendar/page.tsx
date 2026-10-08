@@ -1,5 +1,2 @@
-import { ComingSoon } from "../components/ComingSoon";
-
-export default function CalendarPage() {
-  return <ComingSoon label="Community calendar" />;
-}
+// Keep previously shared calendar URLs useful, including static Pages exports.
+export { default, metadata } from "../events/page";

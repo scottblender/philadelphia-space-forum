@@ -16,8 +16,8 @@ export default function Home() {
               builders, policymakers, and enthusiasts meet to explore what comes next.
             </p>
             <div className="hero-actions">
-              <a className="button button-coral" href="#join">Join the community <span>↓</span></a>
-              <Link className="text-link text-link-light" href="/calendar">Explore events <span>→</span></Link>
+              <a className="button button-blue" href="#join">Join the community <span>↓</span></a>
+              <Link className="text-link text-link-light" href="/events">Explore events <span>→</span></Link>
             </div>
           </div>
         </div>
@@ -42,6 +42,7 @@ export default function Home() {
                 Come for a research talk. Stay for a debate about lunar governance. Meet the
                 person who helps your next idea leave the ground.
               </p>
+              <Link className="text-link" href="/about">Meet the cofounders <span>→</span></Link>
             </div>
           </div>
         </div>
@@ -49,7 +50,7 @@ export default function Home() {
           <a className="scroll-cue scroll-cue-up" href="#top" aria-label="Scroll to the landing section">
             <span aria-hidden="true">↑</span>
           </a>
-          <a className="scroll-cue" href="#join" aria-label="Scroll to the subscription section">
+          <a className="scroll-cue" href="#join" aria-label="Scroll to community updates">
             <span aria-hidden="true">↓</span>
           </a>
         </nav>
@@ -62,12 +63,12 @@ export default function Home() {
             <h2>Your invitation<br />to look <em>up.</em></h2>
           </div>
           <div className="join-card">
-            <p>Get the next event, fresh reading, and occasional notes from Philadelphia&apos;s space community.</p>
-            <a className="button button-coral substack-button" href="https://substack.com/@philadelphiaspaceforum" target="_blank" rel="noreferrer">Subscribe on Substack <span>↗</span></a>
-            <small>Low-frequency. High-orbit. Powered by Substack.</small>
+            <p>Follow Philadelphia Space Forum for upcoming events and updates from our space community.</p>
+            <a className="button button-blue instagram-button" href="https://www.instagram.com/philadelphiaspaceforum/" target="_blank" rel="noreferrer">Follow on Instagram <span>↗</span></a>
+            <small>@philadelphiaspaceforum</small>
           </div>
         </div>
-        <nav className="scroll-cue-group" aria-label="Subscription section navigation">
+        <nav className="scroll-cue-group" aria-label="Community updates section navigation">
           <a className="scroll-cue scroll-cue-up" href="#about" aria-label="Scroll to the introduction">
             <span aria-hidden="true">↑</span>
           </a>

@@ -1,6 +1,10 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 export function SiteHeader({ theme = "light" }: { theme?: "light" | "dark" }) {
+  const pathname = usePathname().replace(/\/$/, "");
   return (
     <header className={`site-header site-header-${theme}`}>
       <div className="page-width nav-inner">
@@ -9,10 +13,10 @@ export function SiteHeader({ theme = "light" }: { theme?: "light" | "dark" }) {
           <span>PHILADELPHIA<br /><b>SPACE FORUM</b></span>
         </Link>
         <nav aria-label="Main navigation">
-          <Link href="/#about">About</Link>
-          <Link href="/calendar">Calendar</Link>
+          <Link href="/about" aria-current={pathname.endsWith("/about") ? "page" : undefined}>About us</Link>
+          <Link href="/events" aria-current={/\/(events|calendar)$/.test(pathname) ? "page" : undefined}>Events</Link>
         </nav>
-        <a className="nav-join" href="https://substack.com/@philadelphiaspaceforum" target="_blank" rel="noreferrer">Join us <span>↗</span></a>
+        <a className="nav-join" href="https://www.instagram.com/philadelphiaspaceforum/" target="_blank" rel="noreferrer">Instagram <span>↗</span></a>
       </div>
     </header>
   );
