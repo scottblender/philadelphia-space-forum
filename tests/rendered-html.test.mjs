@@ -44,6 +44,8 @@ test("about page renders both cofounders and their supplied photos", async () =>
     assert.ok(html.includes(text), `Missing team information: ${text}`);
   }
   assert.match(html, /src="\/team\/scott-blender-portrait\.jpg"/);
+  assert.match(html, /aspect-ratio:3 \/ 4/);
+  assert.match(html, /object-position:center 40%/);
   assert.match(html, /src="\/team\/gianna-voges\.jpg"/);
 });
 
