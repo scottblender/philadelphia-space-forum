@@ -23,7 +23,7 @@
 
 * { box-sizing: border-box; }
 section, footer { scroll-margin-top: var(--header-height); }
-body { min-height: 100vh; margin: 0; position: relative; background: var(--space-black); color: var(--ink); font-family: var(--font-sans); }
+body { min-height: 100vh; min-height: 100dvh; margin: 0; position: relative; background: var(--space-black); color: var(--ink); font-family: var(--font-sans); }
 .starfield { position: fixed; inset: 0; z-index: 0; pointer-events: none; background-repeat: repeat; background-size: 640px 640px; opacity: .75; }
 .route-transition { position: relative; z-index: 1; min-height: 100vh; min-height: 100dvh; animation: route-fade-in .3s ease-out backwards; }
 .route-transition.is-fading-out { opacity: 0; pointer-events: none; animation: none; transition: opacity .17s ease-in; }
