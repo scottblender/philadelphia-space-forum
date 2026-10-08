@@ -30,6 +30,24 @@ npm run build:pages
 
 The generated site is written to `out/`.
 
+### Custom domain
+
+Set `philadelphiaspaceforum.org` in the repository's **Settings → Pages →
+Custom domain**. Configure the domain's DNS with GitHub Pages' four apex A
+records and a `www` CNAME pointing to `scottblender.github.io`.
+
+After changing the domain, run **Actions → Deploy Next.js site to Pages →
+Run workflow** on `main`. The workflow reads `configure-pages`' current
+`base_path`, so the build uses `/philadelphia-space-forum` at the default
+address and an empty prefix at the custom domain. Enable **Enforce HTTPS**
+in Pages settings once GitHub makes it available.
+
+To verify the custom-domain build locally:
+
+```bash
+GITHUB_REPOSITORY=scottblender/philadelphia-space-forum PAGES_BASE_PATH='' npm run test:pages
+```
+
 ## Content and components
 
 - Add events in `app/data/events.ts`. Each `EventCard` shows its location,

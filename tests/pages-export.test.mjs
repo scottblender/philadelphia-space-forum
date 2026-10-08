@@ -3,7 +3,8 @@ import { readFile, stat } from "node:fs/promises";
 import test from "node:test";
 
 const repoName = process.env.GITHUB_REPOSITORY?.split("/")[1] ?? "";
-const basePath = repoName && !repoName.endsWith(".github.io") ? `/${repoName}` : "";
+const repositoryBasePath = repoName && !repoName.endsWith(".github.io") ? `/${repoName}` : "";
+const basePath = (process.env.PAGES_BASE_PATH ?? repositoryBasePath).replace(/\/$/, "");
 const output = new URL("../out/", import.meta.url);
 
 test("Pages exports new and legacy routes with valid prefixed assets and links", async () => {
