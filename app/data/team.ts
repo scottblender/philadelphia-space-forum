@@ -12,7 +12,7 @@ export const team: TeamMemberData[] = [
     id: "scott-blender",
     name: "Scott Blender",
     role: "Cofounder",
-    photo: "/team/scott-blender.jpg",
+    photo: "/team/scott-blender-portrait.jpg",
     photoPosition: "center 30%",
     bio: "Originally from Philadelphia, Scott is a third-year Ph.D. student at Rensselaer Polytechnic Institute (RPI). He earned his bachelor’s degree in mechanical engineering from Temple University and studies cislunar space domain awareness.",
   },

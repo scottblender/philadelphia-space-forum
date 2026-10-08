@@ -16,11 +16,11 @@ test("Pages exports new and legacy routes with valid prefixed assets and links",
     assert.doesNotMatch(html, /substack|codex-preview|Syne/i);
     if (route === "events/" || route === "calendar/") assert.match(html, /Cislunar Space Workshop/);
     if (route === "about/") {
-      assert.ok(html.includes(`src="${basePath}/team/scott-blender.jpg"`));
+      assert.ok(html.includes(`src="${basePath}/team/scott-blender-portrait.jpg"`));
       assert.ok(html.includes(`src="${basePath}/team/gianna-voges.jpg"`));
     }
   }
-  for (const path of ["starfield.svg", "team/scott-blender.jpg", "team/gianna-voges.jpg"]) {
+  for (const path of ["starfield.svg", "team/scott-blender-portrait.jpg", "team/gianna-voges.jpg"]) {
     assert.ok((await stat(new URL(path, output))).size > 0);
   }
 });

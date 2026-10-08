@@ -43,7 +43,7 @@ test("about page renders both cofounders and their supplied photos", async () =>
   for (const text of ["Scott Blender", "Gianna Voges", "Rensselaer", "Temple University", "journalism", "Philadelphia magazine"]) {
     assert.ok(html.includes(text), `Missing team information: ${text}`);
   }
-  assert.match(html, /src="\/team\/scott-blender\.jpg"/);
+  assert.match(html, /src="\/team\/scott-blender-portrait\.jpg"/);
   assert.match(html, /src="\/team\/gianna-voges\.jpg"/);
 });
 
