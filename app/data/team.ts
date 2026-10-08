@@ -4,7 +4,6 @@ export interface TeamMemberData {
   role: string;
   photo: string;
   photoPosition?: string;
-  photoAspectRatio?: string;
   bio: string;
 }
 
@@ -15,7 +14,6 @@ export const team: TeamMemberData[] = [
     role: "Cofounder",
     photo: "/team/scott-blender-portrait.jpg",
     photoPosition: "center 40%",
-    photoAspectRatio: "3 / 4",
     bio: "Originally from Philadelphia, Scott is a third-year Ph.D. student at Rensselaer Polytechnic Institute (RPI). He earned his bachelor’s degree in mechanical engineering from Temple University and studies cislunar space domain awareness.",
   },
   {

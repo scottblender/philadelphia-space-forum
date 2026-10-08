@@ -132,7 +132,7 @@ h2 em { color: var(--cyan-blue); font-weight: inherit; font-style: normal; }
 .team-section { padding: 64px 0 100px; }
 .team-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 40px; }
 .team-member { min-width: 0; border-top: 1px solid var(--line); padding-top: 28px; display: flex; align-items: flex-start; gap: 24px; }
-.team-photo { flex: 0 0 160px; aspect-ratio: 1; overflow: hidden; border: 1px solid var(--line); background: var(--charcoal); }
+.team-photo { flex: 0 0 160px; aspect-ratio: 3 / 4; overflow: hidden; border: 1px solid var(--line); background: var(--charcoal); }
 .team-photo img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .team-copy { flex: 1; min-width: 0; }
 .team-copy .eyebrow { margin-bottom: 14px; font-size: 10px; }

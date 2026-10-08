@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 const { default: worker } = await import("../dist/server/index.js");
@@ -44,7 +45,10 @@ test("about page renders both cofounders and their supplied photos", async () =>
     assert.ok(html.includes(text), `Missing team information: ${text}`);
   }
   assert.match(html, /src="\/team\/scott-blender-portrait\.jpg"/);
-  assert.match(html, /aspect-ratio:3 \/ 4/);
+  assert.equal((html.match(/class="team-photo"/g) ?? []).length, 2);
+  assert.doesNotMatch(html, /class="team-photo"[^>]*style=/);
+  const css = await readFile(new URL("../app/globals.css", import.meta.url), "utf8");
+  assert.match(css, /\.team-photo\s*\{[^}]*aspect-ratio:\s*3\s*\/\s*4/);
   assert.match(html, /object-position:center 40%/);
   assert.match(html, /src="\/team\/gianna-voges\.jpg"/);
 });

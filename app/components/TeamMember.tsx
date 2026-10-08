@@ -5,7 +5,7 @@ import { publicAsset } from "../lib/publicAsset";
 export function TeamMember({ member }: { member: TeamMemberData }) {
   return (
     <article className="team-member" aria-labelledby={`${member.id}-name`}>
-      <div className="team-photo" style={{ aspectRatio: member.photoAspectRatio ?? "1" }}>
+      <div className="team-photo">
         <Image src={publicAsset(member.photo)} alt={member.name} width={800} height={800} unoptimized style={{ objectPosition: member.photoPosition ?? "center" }} />
       </div>
       <div className="team-copy">
