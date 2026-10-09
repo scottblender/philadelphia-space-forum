@@ -99,6 +99,8 @@ export function OrganizerDashboard() {
   if (!rsvpApiUrl) return <p>Organizer tools are not available yet.</p>;
   if (!signedIn) return (
     <form className="organizer-login" onSubmit={login}>
+      <h2>Organizer login</h2>
+      <p>Enter your organizer access key to manage events and registrations.</p>
       <label htmlFor="organizer-key">Organizer access key</label>
       <input id="organizer-key" type="password" value={accessKey} onChange={(event) => setAccessKey(event.target.value)} autoComplete="current-password" required disabled={pending} />
       <button className="button button-blue" disabled={pending}>{pending ? "Signing in…" : "Sign in"}</button>
