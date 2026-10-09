@@ -12,6 +12,7 @@ export function SiteFooter() {
         <div className="footer-links">
           <Link href="/about">About us</Link>
           <Link href="/events">Events</Link>
+          <Link href="/rsvp/manage/">Manage my RSVP</Link>
           <Link href="/organizer/">Organizer login</Link>
           <a href="https://www.instagram.com/philadelphiaspaceforum/" target="_blank" rel="noreferrer">Instagram ↗</a>
         </div>

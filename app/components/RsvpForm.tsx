@@ -30,7 +30,7 @@ export function RsvpForm({ eventId, title, isTest }: { eventId: string; title: s
     <dialog ref={dialog} id={`${eventId}-rsvp-dialog`} className="rsvp-modal" aria-labelledby={`${eventId}-rsvp-heading`} onCancel={(event) => { event.preventDefault(); if (!busy) setOpen(false); }} onClose={() => setOpen(false)} onClick={(event) => { if (!busy && event.target === event.currentTarget) { const bounds = event.currentTarget.getBoundingClientRect(); if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) setOpen(false); } }}>
       <div className="rsvp-modal-header"><p className="eyebrow"><span /> {isTest ? "Test registration" : "Event registration"}</p><button type="button" className="rsvp-close" aria-label="Close registration form" disabled={busy} onClick={() => setOpen(false)}>×</button></div>
       <h2 id={`${eventId}-rsvp-heading`}>{title}</h2>
-      {isTest && <p>This is a test event. Please use test details when trying the form.</p>}
+      {isTest && <p>This is a test event. Please use your own email address when testing email confirmations.</p>}
       {hasOpened && <RsvpFields eventId={eventId} open={open} onBusyChange={setBusy} />}
     </dialog>
   </div>;
@@ -42,6 +42,7 @@ function RsvpFields({ eventId, open, onBusyChange }: { eventId: string; open: bo
   const [scriptReady, setScriptReady] = useState(false);
   const [challenge, setChallenge] = useState("");
   const [pending, setPending] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
   const [cancellationUrl, setCancellationUrl] = useState("");
   const widget = useRef<HTMLDivElement>(null);
   const widgetId = useRef<string | null>(null);
@@ -82,7 +83,7 @@ function RsvpFields({ eventId, open, onBusyChange }: { eventId: string; open: bo
       });
       const url = new URL(publicAsset("/rsvp/cancel/"), window.location.origin);
       url.hash = result.cancellationToken;
-      setCancellationUrl(url.href);
+      setEmailSent(Boolean(result.emailSent)); setCancellationUrl(url.href);
     } catch (issue) {
       setError(issue instanceof Error ? issue.message : "Unable to register. Please try again.");
       if (widgetId.current) challengeApi()?.reset(widgetId.current);
@@ -94,9 +95,10 @@ function RsvpFields({ eventId, open, onBusyChange }: { eventId: string; open: bo
   if (cancellationUrl) return (
     <div className="rsvp-confirmation" role="status">
       <h3>You&apos;re on the list.</h3>
-      <p>Your place is reserved. Please save the cancellation link before closing this form; an email confirmation is not sent.</p>
-      <a className="text-link" href={cancellationUrl}>Your cancellation link</a>
-      <button type="button" className="rsvp-copy" onClick={() => navigator.clipboard.writeText(cancellationUrl).catch(() => setError("Open the cancellation link and save its address."))}>Copy cancellation link</button>
+      <p>{emailSent ? "Your place is reserved. A confirmation email with a Manage RSVP link has been sent. Check your inbox and spam folder." : "Your place is reserved, but the confirmation email could not be sent. You can request a management email below or save the cancellation link as a backup."}</p>
+      <a className="text-link" href={publicAsset("/rsvp/manage/")}>Manage my RSVP</a>
+      {!emailSent && <><a className="text-link" href={cancellationUrl}>Backup cancellation link</a>
+      <button type="button" className="rsvp-copy" onClick={() => navigator.clipboard.writeText(cancellationUrl).catch(() => setError("Open the cancellation link and save its address."))}>Copy cancellation link</button></>}
       {error && <p>{error}</p>}
     </div>
   );
@@ -113,7 +115,7 @@ function RsvpFields({ eventId, open, onBusyChange }: { eventId: string; open: bo
             <input id={`${eventId}-name`} name="name" autoComplete="name" maxLength={120} required disabled={pending} />
             <label htmlFor={`${eventId}-email`}>Email address</label>
             <input id={`${eventId}-email`} name="email" type="email" autoComplete="email" maxLength={254} required disabled={pending} />
-            <p className="form-note">Your name and email are only available to the organizers and are used to manage this event.</p>
+            <p className="form-note">Your name and email are only available to the organizers and are used to manage this event and send registration emails.</p>
             {open && availability?.turnstileSiteKey && <Script id="rsvp-turnstile" src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" strategy="afterInteractive" onReady={() => setScriptReady(true)} onError={() => setError("Verification could not load. Please try again later.")} />}
             <div ref={widget} />
             {availability?.open && !availability.turnstileSiteKey && <p>Registration is temporarily unavailable.</p>}

@@ -281,3 +281,6 @@ input:focus-visible, select:focus-visible, summary:focus-visible { outline: 2px 
 .organizer-section .event-create-form input, .organizer-section .event-create-form select, .organizer-section .event-create-form textarea { background: #141414; color: #fff; border: 1px solid #555; width: 100%; }
 .organizer-section .event-create-form input:disabled { background: #252525; color: #888; border-color: #3a3a3a; opacity: .55; cursor: not-allowed; }
 .event-create-form label:has([name="title"]), .event-create-form label:has([name="meetingUrl"]) { grid-column: 1 / -1; }
+
+.manage-rsvp-section { display: grid; gap: 28px; }
+.manage-rsvp-section .organizer-login { padding: 28px; border: 1px solid var(--line); }

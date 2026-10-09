@@ -7,6 +7,7 @@ import { csvCell } from "../app/lib/rsvp.ts";
 
 const migration = await readFile(new URL("../backend/migrations/0001_rsvps.sql", import.meta.url), "utf8");
 const eventMigration = await readFile(new URL("../backend/migrations/0002_event_management.sql", import.meta.url), "utf8");
+const emailMigration = await readFile(new URL("../backend/migrations/0003_rsvp_email.sql", import.meta.url), "utf8");
 const origin = "https://philadelphiaspaceforum.org";
 const eventId = "cislunar-space-situational-awareness-workshop";
 // Public fixture value, not a production secret.
@@ -14,7 +15,7 @@ const adminToken = "test-organizer-token-0000000000000000000000";
 
 function fixture(t, capacity = 2) {
   const sqlite = new DatabaseSync(":memory:");
-  sqlite.exec("PRAGMA foreign_keys = ON"); sqlite.exec(migration); sqlite.exec(eventMigration);
+  sqlite.exec("PRAGMA foreign_keys = ON"); sqlite.exec(migration); sqlite.exec(eventMigration); sqlite.exec(emailMigration);
   sqlite.prepare("INSERT INTO events (id, title, capacity, registration_open) VALUES (?, ?, ?, 1)").run(eventId, "SSA workshop", capacity);
   const DB = { prepare(sql) {
     const statement = sqlite.prepare(sql);
@@ -174,4 +175,54 @@ test("oversized requests are rejected and CSV export neutralizes spreadsheet for
   assert.equal((await f.call(`/admin/events/${created.id}`, { method: "PUT", admin: true, body: { ...body, eventType: "in-person", location: "Pennovation Center" } })).status, 200);
   event = (await (await f.call("/events")).json()).events.find(e => e.id === created.id);
   assert.equal(event.location.name, "Pennovation Center"); assert.equal(event.meetingUrl, undefined);
+});
+
+test("confirmation email uses private expiring management links and cancellation requires an explicit action", async t => {
+  const f = fixture(t); f.env.RESEND_API_KEY = "fixture-email-key";
+  const verification = globalThis.fetch;
+  const emails = [];
+  globalThis.fetch = async (url, init) => {
+    if (url === "https://api.resend.com/emails") { emails.push(JSON.parse(init.body)); return Response.json({ id: "test-email" }); }
+    return verification(url, init);
+  };
+  const registered = await (await f.register("mail@example.com")).json();
+  assert.equal(registered.emailSent, true);
+  assert.equal(emails[0].from, "Philadelphia Space Forum <events@philadelphiaspaceforum.org>");
+  const token = emails[0].text.match(/\/rsvp\/manage\/#([a-f0-9-]{72})/)[1];
+  const stored = f.sqlite.prepare("SELECT * FROM management_tokens").get();
+  assert.notEqual(stored.token_hash, token);
+  const view = await (await f.call("/management/view", { body: { token } })).json();
+  assert.equal(view.status, "confirmed");
+  assert.equal(f.sqlite.prepare("SELECT status FROM registrations").get().status, "confirmed");
+  assert.equal((await f.call("/management/cancel", { body: { token: "bad" } })).status, 400);
+  assert.equal((await f.call("/management/cancel", { body: { token } })).status, 200);
+  assert.equal(f.sqlite.prepare("SELECT status FROM registrations").get().status, "cancelled");
+  f.sqlite.exec("UPDATE management_tokens SET expires_at = 0");
+  assert.equal((await f.call("/management/view", { body: { token } })).status, 401);
+});
+
+test("email failure preserves RSVP and management recovery hides email existence and limits requests", async t => {
+  const f = fixture(t); f.env.RESEND_API_KEY = "fixture-email-key";
+  const verification = globalThis.fetch;
+  let fail = true; const emails = [];
+  globalThis.fetch = async (url, init) => {
+    if (url === "https://api.resend.com/emails") {
+      if (fail) return Response.json({ error: "unavailable" }, { status: 503 });
+      emails.push(JSON.parse(init.body)); return Response.json({ id: "test-email" });
+    }
+    return verification(url, init);
+  };
+  const registered = await (await f.register("recover@example.com")).json();
+  assert.equal(registered.emailSent, false); assert.ok(registered.cancellationToken);
+  assert.equal(f.sqlite.prepare("SELECT status FROM registrations").get().status, "confirmed");
+  assert.equal(f.sqlite.prepare("SELECT COUNT(*) AS n FROM management_tokens").get().n, 0);
+  fail = false;
+  const body = { eventId, email: "recover@example.com", turnstileToken: "valid" };
+  const first = await f.call("/management/request", { body }); assert.equal(first.status, 200);
+  const message = (await first.json()).message; assert.equal(emails.length, 1);
+  assert.equal((await f.call("/management/request", { body })).status, 429);
+  f.sqlite.exec("UPDATE email_limits SET last_sent = 0");
+  const unknown = await f.call("/management/request", { body: { ...body, email: "unknown@example.com" } });
+  assert.equal(unknown.status, 200); assert.equal((await unknown.json()).message, message); assert.equal(emails.length, 1);
+  assert.equal((await f.call("/management/request", { body: { ...body, turnstileToken: "bad" } })).status, 400);
 });

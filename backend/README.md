@@ -160,3 +160,17 @@ with its Meetup link, and preserves edits made in the organizer dashboard.
 Use Add event to choose Website RSVP, Meetup RSVP, or Other external RSVP.
 Use Edit event to update details. External attendee lists and capacity remain on
 the external platform. Events with attendee records retain their registration method.
+
+## Confirmation emails and RSVP management
+
+The verified sending domain is philadelphiaspaceforum.org. Set RESEND_API_KEY as
+an encrypted Worker secret. Emails use Philadelphia Space Forum
+<events@philadelphiaspaceforum.org>. Pull main, run `npm.cmd run rsvp:migrate`,
+then `npm.cmd run rsvp:deploy`. Confirmation emails are sent for new native RSVPs.
+Existing attendees can use `/rsvp/manage/` to request a management link.
+Management links expire after 24 hours and only hashed tokens persist. Requesting
+links requires Turnstile and is limited to one per minute per email and per IP.
+Unknown addresses receive the same response. Opening a link never cancels an RSVP.
+Email acceptance does not guarantee inbox delivery; check Resend logs and spam.
+If sending fails, the RSVP remains confirmed and a backup cancellation link is shown.
+No past attendees are emailed automatically. Email changes and reminders are not sent.

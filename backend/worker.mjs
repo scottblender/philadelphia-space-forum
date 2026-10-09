@@ -88,6 +88,39 @@ async function verifyChallenge(request, env, data, id) {
     throw new HttpError(400, "Verification expired or failed. Please try again.");
 }
 
+const emailFrom = "Philadelphia Space Forum <events@philadelphiaspaceforum.org>";
+const siteOrigin = "https://philadelphiaspaceforum.org";
+const escapeHtml = value => String(value).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+async function sendManagementEmail(env, registration, event, confirmation = false) {
+  if (!env.RESEND_API_KEY) return false;
+  const token = crypto.randomUUID() + crypto.randomUUID();
+  const tokenHash = await hash(token);
+  const expires = Date.now() + 86400000;
+  await env.DB.prepare("INSERT INTO management_tokens (token_hash, registration_id, expires_at) VALUES (?, ?, ?)").bind(tokenHash, registration.id, expires).run();
+  const url = `${siteOrigin}/rsvp/manage/#${token}`;
+  const details = event.details_json ? JSON.parse(event.details_json) : {};
+  const when = event.starts_at ? new Intl.DateTimeFormat("en-US", { dateStyle: "full", timeStyle: "short", timeZone: "America/New_York" }).format(new Date(event.starts_at)) + " (Eastern time)" : "Date to be announced";
+  const where = details.eventType === "online" ? "Online" : details.location?.name || "Location to be announced";
+  const heading = confirmation ? "Your RSVP is confirmed" : "Manage your RSVP";
+  const text = `${heading}\n\n${event.title}\n${when}\n${where}\n\nView or cancel your RSVP: ${url}\n\nThis link expires in 24 hours. Request another at ${siteOrigin}/rsvp/manage/. If you did not request this email, you can ignore it.`;
+  try {
+    const sent = await fetch("https://api.resend.com/emails", { method: "POST", signal: AbortSignal.timeout(10000),
+      headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, "Content-Type": "application/json", "Idempotency-Key": `rsvp-${tokenHash}` },
+      body: JSON.stringify({ from: emailFrom, to: [registration.email], subject: `${heading}: ${event.title}`, text,
+        html: `<h1>${escapeHtml(heading)}</h1><p>${escapeHtml(event.title)}</p><p>${escapeHtml(when)}<br>${escapeHtml(where)}</p><p><a href="${url}">Manage RSVP</a></p><p>This link expires in 24 hours. <a href="${siteOrigin}/rsvp/manage/">Request a new link</a>.</p><p>If you did not request this email, you can ignore it.</p>` }) });
+    if (sent.ok) return true;
+  } catch {}
+  await env.DB.prepare("DELETE FROM management_tokens WHERE token_hash = ?").bind(tokenHash).run();
+  return false;
+}
+async function managementRegistration(db, token) {
+  if (typeof token !== "string" || !/^[a-f0-9-]{72}$/.test(token)) throw new HttpError(400, "This management link is invalid.");
+  const row = await db.prepare(`SELECT r.id, r.event_id, r.status FROM management_tokens t JOIN registrations r ON r.id = t.registration_id
+    WHERE t.token_hash = ? AND t.expires_at > ?`).bind(await hash(token), Date.now()).first();
+  if (!row) throw new HttpError(401, "This link has expired. Request a new link below.");
+  return row;
+}
+
 async function route(request, env, path) {
   const method = request.method;
   if (path === "/health" && method === "GET") return response({ ok: true });
@@ -134,7 +167,43 @@ async function route(request, env, path) {
       if (/UNIQUE constraint failed/i.test(String(error))) throw new HttpError(409, "This email already has an RSVP.");
       throw error;
     }
-    return response({ id: registrationId, status: "confirmed", cancellationToken: token }, 201);
+    let emailSent = false;
+    try { emailSent = await sendManagementEmail(env, { id: registrationId, email }, event, true); } catch {}
+    return response({ id: registrationId, status: "confirmed", cancellationToken: token, emailSent }, 201);
+  }
+
+  if (path === "/management/request" && method === "POST") {
+    if (!env.RESEND_API_KEY) throw new HttpError(503, "Email management is not available yet.");
+    const data = await readJson(request);
+    const id = typeof data.eventId === "string" ? data.eventId : "";
+    const email = typeof data.email === "string" ? data.email.trim().toLowerCase() : "";
+    if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new HttpError(400, "Enter a valid email address.");
+    const event = await getEvent(env.DB, id);
+    await verifyChallenge(request, env, data, id);
+    const now = Date.now();
+    // Atomically limit requests per email and per IP, including unknown emails.
+    for (const key of ["email:" + email, "ip:" + (request.headers.get("CF-Connecting-IP") || "unknown")]) {
+      const result = await env.DB.prepare(`INSERT INTO email_limits (key_hash, last_sent) VALUES (?, ?)
+        ON CONFLICT(key_hash) DO UPDATE SET last_sent = excluded.last_sent WHERE email_limits.last_sent < ?`)
+        .bind(await hash(key), now, now - 60000).run();
+      if (!result.meta.changes) throw new HttpError(429, "Please wait a minute before requesting another link.");
+    }
+    await env.DB.prepare("DELETE FROM management_tokens WHERE expires_at <= ?").bind(now).run();
+    const registration = await env.DB.prepare("SELECT id, email FROM registrations WHERE event_id = ? AND email = ? AND status = 'confirmed'").bind(id, email).first();
+    if (registration) { try { await sendManagementEmail(env, registration, event); } catch {} }
+    return response({ message: "If you have an active RSVP for this event, a management link will be emailed to you. Check your inbox and spam folder." });
+  }
+  if (path === "/management/view" && method === "POST") {
+    const data = await readJson(request);
+    const registration = await managementRegistration(env.DB, data.token);
+    const event = await env.DB.prepare("SELECT id, title, starts_at, deleted FROM events WHERE id = ?").bind(registration.event_id).first();
+    return response({ event, status: registration.status });
+  }
+  if (path === "/management/cancel" && method === "POST") {
+    const data = await readJson(request);
+    const registration = await managementRegistration(env.DB, data.token);
+    await env.DB.prepare("UPDATE registrations SET status = 'cancelled', cancelled_at = ? WHERE id = ? AND status = 'confirmed'").bind(Date.now(), registration.id).run();
+    return response({ message: "Your RSVP has been cancelled.", status: "cancelled" });
   }
 
   if (path === "/cancel" && method === "POST") {
