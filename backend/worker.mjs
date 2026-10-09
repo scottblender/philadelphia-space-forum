@@ -47,12 +47,21 @@ async function requireOrganizer(request, env) {
   if (difference) throw new HttpError(401, "The organizer access key is incorrect.");
 }
 
+function registrationProvider(event) {
+  return event.details_json ? JSON.parse(event.details_json).rsvpProvider : "native";
+}
+
+function externalUrl(value) {
+  try { const url = new URL(value); if (url.protocol !== "https:" || url.username || url.password || value.length > 2000) throw new Error(); return url.href; }
+  catch { throw new HttpError(400, "Enter a valid HTTPS registration URL."); }
+}
+
 function publicEvent(event, now) {
   const available = Math.max(0, event.capacity - event.confirmed);
   return {
     id: event.id, title: event.title, startsAt: event.starts_at,
     capacity: event.capacity, available,
-    open: Boolean(event.registration_open && event.capacity > 0 && (event.starts_at === null || event.starts_at > now) && available > 0),
+    open: Boolean(registrationProvider(event) === "native" && event.registration_open && event.capacity > 0 && (event.starts_at === null || event.starts_at > now) && available > 0),
     full: event.capacity > 0 && available === 0,
   };
 }
@@ -104,6 +113,7 @@ async function route(request, env, path) {
     if (!name || name.length > 120 || /[\x00-\x1f]/.test(name) || email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
       throw new HttpError(400, "Enter your name and a valid email address.");
     const event = await getEvent(env.DB, id);
+    if (registrationProvider(event) !== "native") throw new HttpError(409, "Register on the external event website.");
     if (!event.registration_open || (event.starts_at !== null && event.starts_at <= Date.now()) || event.capacity < 1) throw new HttpError(409, "Registration is closed for this event.");
     await verifyChallenge(request, env, data, id);
     const token = crypto.randomUUID() + crypto.randomUUID();
@@ -141,29 +151,47 @@ async function route(request, env, path) {
     if (path === "/admin/events" && method === "GET") {
       const result = await env.DB.prepare(`SELECT e.*, (SELECT COUNT(*) FROM registrations r WHERE r.event_id = e.id AND r.status = 'confirmed') AS confirmed
         FROM events e WHERE e.deleted = 0 ORDER BY e.starts_at DESC`).all();
-      return response({ events: result.results });
+      return response({ events: result.results.map(e => ({ ...e, rsvpProvider: registrationProvider(e), rsvpUrl: e.details_json ? JSON.parse(e.details_json).rsvpUrl : undefined })) });
     }
-    if (path === "/admin/events" && method === "POST") {
+    const editMatch = path.match(/^\/admin\/events\/([^/]+)$/);
+    if ((path === "/admin/events" && method === "POST") || (editMatch && method === "PUT")) {
+      const existing = editMatch ? await getEvent(env.DB, editMatch[1]) : null;
       const data = await readJson(request);
       const text = (key, max, required = false) => {
         const value = typeof data[key] === "string" ? data[key].trim() : "";
         if ((required && !value) || value.length > max || /[\x00-\x08\x0b\x0c\x0e-\x1f]/.test(value)) throw new HttpError(400, `Enter a valid ${key}.`);
         return value;
       };
+      const provider = data.rsvpProvider ?? "native";
+      if (!["native", "external", "meetup"].includes(provider)) throw new HttpError(400, "Choose a registration option.");
+      const rsvpUrl = provider === "native" ? undefined : externalUrl(text("rsvpUrl", 2000, true));
       const title = text("title", 200, true), synopsis = text("synopsis", 2000, true);
       const startsAt = data.startsAt || null, endsAt = data.endsAt || null;
       if ((startsAt && (typeof startsAt !== "string" || !Number.isFinite(Date.parse(startsAt)))) ||
           (endsAt && (typeof endsAt !== "string" || !Number.isFinite(Date.parse(endsAt)) || !startsAt || Date.parse(endsAt) <= Date.parse(startsAt))))
         throw new HttpError(400, "Enter valid dates with the end after the start.");
       if (!Number.isInteger(data.capacity) || data.capacity < 0 || data.capacity > 10000) throw new HttpError(400, "Enter a capacity between 0 and 10,000.");
-      const id = "event-" + crypto.randomUUID();
+      const id = existing?.id ?? "event-" + crypto.randomUUID();
       const details = { id, title, synopsis, startsAt, endsAt, timeZone: "America/New_York", status: "scheduled",
         category: "Workshop", host: text("host", 200) || "Philadelphia Space Forum",
         location: { name: text("location", 300) || "To be announced", address: text("address", 300), city: text("city", 120), state: text("state", 80) },
         speaker: { name: text("speaker", 200), role: "Workshop leader", bio: text("speakerBio", 2000) },
-        topics: text("topics", 2000).split("\n").map(t => t.trim()).filter(Boolean), rsvpProvider: "native" };
+        topics: text("topics", 2000).split("\n").map(t => t.trim()).filter(Boolean), rsvpProvider: provider, ...(rsvpUrl ? { rsvpUrl } : {}) };
+      if (existing) {
+        if (registrationProvider(existing) !== provider) {
+          const registrations = await env.DB.prepare("SELECT COUNT(*) AS count FROM registrations WHERE event_id = ?").bind(id).first();
+          if (registrations.count) throw new HttpError(409, "Keep the registration method for events with attendee records.");
+        }
+        const result = await env.DB.prepare(`UPDATE events SET title = ?, starts_at = ?, capacity = ?, details_json = ?,
+          registration_open = CASE WHEN ? = 'native' AND ? > 0 THEN registration_open ELSE 0 END
+          WHERE id = ? AND deleted = 0 AND ? >= (SELECT COUNT(*) FROM registrations WHERE event_id = ? AND status = 'confirmed')`)
+          .bind(title, startsAt ? Date.parse(startsAt) : null, provider === "native" ? data.capacity : 0, JSON.stringify(details), provider,
+            data.capacity, id, provider === "native" ? data.capacity : 0, id).run();
+        if (!result.meta.changes) throw new HttpError(409, "Capacity cannot be lower than the confirmed attendee count.");
+        return response({ id, saved: true });
+      }
       await env.DB.prepare("INSERT INTO events (id, title, starts_at, capacity, details_json) VALUES (?, ?, ?, ?, ?)")
-        .bind(id, title, startsAt ? Date.parse(startsAt) : null, data.capacity, JSON.stringify(details)).run();
+        .bind(id, title, startsAt ? Date.parse(startsAt) : null, (provider === "native" ? data.capacity : 0), JSON.stringify(details)).run();
       return response({ id }, 201);
     }
     const adminEvent = path.match(/^\/admin\/events\/([^/]+)$/);
@@ -173,8 +201,17 @@ async function route(request, env, path) {
       return response({ deleted: true });
     }
     if (adminEvent && method === "PATCH") {
-      await getEvent(env.DB, adminEvent[1]);
+      const event = await getEvent(env.DB, adminEvent[1]);
       const data = await readJson(request);
+      if (registrationProvider(event) !== "native") {
+        const title = typeof data.title === "string" ? data.title.trim() : "";
+        if (!title || title.length > 200 || /[\x00-\x1f]/.test(title)) throw new HttpError(400, "Enter a valid title.");
+        const rsvpUrl = externalUrl(typeof data.rsvpUrl === "string" ? data.rsvpUrl : "");
+        const details = { ...JSON.parse(event.details_json), title, rsvpUrl };
+        await env.DB.prepare("UPDATE events SET title = ?, details_json = ?, registration_open = 0 WHERE id = ? AND deleted = 0")
+          .bind(title, JSON.stringify(details), event.id).run();
+        return response({ saved: true });
+      }
       if (!Number.isInteger(data.capacity) || data.capacity < 0 || data.capacity > 10000 || typeof data.registrationOpen !== "boolean")
         throw new HttpError(400, "Enter a capacity between 0 and 10,000 and a registration setting.");
       const result = await env.DB.prepare(`UPDATE events SET capacity = ?, registration_open = ? WHERE id = ?
@@ -214,7 +251,7 @@ export default {
     if (origin) {
       result.headers.set("Access-Control-Allow-Origin", origin);
       result.headers.set("Vary", "Origin");
-      result.headers.set("Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE, OPTIONS");
+      result.headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
       result.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
     }
     return result;

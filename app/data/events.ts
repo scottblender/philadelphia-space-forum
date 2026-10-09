@@ -12,7 +12,7 @@ export interface ForumEvent {
   speaker: { name: string; role: string; bio: string };
   topics: string[];
   rsvpUrl?: string;
-  rsvpProvider: "meetup" | "native";
+  rsvpProvider: "meetup" | "native" | "external";
   isTest?: boolean;
 }
 

@@ -9,8 +9,10 @@ import { events } from "../app/data/events.ts";
 const mode = process.argv[2];
 if (!["--local", "--remote"].includes(mode)) throw new Error("Choose --local or --remote.");
 const quote = (value) => `'${value.replaceAll("'", "''")}'`;
-const sql = events.filter((event) => event.rsvpProvider === "native").map((event) => `INSERT INTO events (id, title, starts_at, details_json) VALUES (${quote(event.id)}, ${quote(event.title)}, ${event.startsAt ? Date.parse(event.startsAt) : "NULL"}, ${quote(JSON.stringify(event))})
-ON CONFLICT(id) DO UPDATE SET title = excluded.title, starts_at = excluded.starts_at, details_json = excluded.details_json,
+const sql = events.map((event) => `INSERT INTO events (id, title, starts_at, details_json) VALUES (${quote(event.id)}, ${quote(event.title)}, ${event.startsAt ? Date.parse(event.startsAt) : "NULL"}, ${quote(JSON.stringify(event))})
+ON CONFLICT(id) DO UPDATE SET title = CASE WHEN events.details_json IS NULL THEN excluded.title ELSE events.title END,
+starts_at = CASE WHEN events.details_json IS NULL THEN excluded.starts_at ELSE events.starts_at END,
+details_json = COALESCE(events.details_json, excluded.details_json),
 registration_open = ${event.status === "cancelled" ? "0" : "CASE WHEN events.deleted = 1 THEN 0 ELSE events.registration_open END"};`).join("\n");
 const file = join(tmpdir(), `psf-events-${crypto.randomUUID()}.sql`);
 try {

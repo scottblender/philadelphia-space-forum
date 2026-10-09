@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import type { ForumEvent } from "../data/events";
 import { csvCell, rsvpApiUrl, rsvpRequest } from "../lib/rsvp";
 
-type OrganizerEvent = { id: string; title: string; starts_at: number | null; capacity: number; confirmed: number; registration_open: number };
+type OrganizerEvent = { id: string; title: string; starts_at: number | null; capacity: number; confirmed: number; registration_open: number; rsvpProvider: "native" | "meetup" | "external"; rsvpUrl?: string; details_json?: string };
 type Registration = { id: string; name: string; email: string; status: string; created_at: number };
 
 export function OrganizerDashboard() {
@@ -16,6 +17,13 @@ export function OrganizerDashboard() {
   const [signedIn, setSignedIn] = useState(false);
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const editingEvent = events.find(e => e.id === editingId);
+  const draft: Partial<ForumEvent> = editingEvent?.details_json ? JSON.parse(editingEvent.details_json) : {};
+  const localDate = (value?: string | null) => { if (!value) return ""; const date = new Date(value); return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16); };
+  const [newProvider, setNewProvider] = useState("native");
+  const [externalTitle, setExternalTitle] = useState("");
+  const [externalLink, setExternalLink] = useState("");
   const [adding, setAdding] = useState(false);
   const selected = events.find((event) => event.id === selectedId);
 
@@ -26,6 +34,7 @@ export function OrganizerDashboard() {
   async function select(id: string, list = events) {
     setMessage(""); setRegistrations([]); setSelectedId(id);
     const event = list.find((item) => item.id === id);
+    setExternalTitle(event?.title ?? ""); setExternalLink(event?.rsvpUrl ?? "");
     setCapacity(event?.capacity ?? 0); setRegistrationOpen(Boolean(event?.registration_open));
     if (id) {
       const data = await request(`/admin/registrations?eventId=${encodeURIComponent(id)}`);
@@ -49,7 +58,7 @@ export function OrganizerDashboard() {
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); setPending(true); setMessage("");
     try {
-      await request(`/admin/events/${encodeURIComponent(selectedId)}`, { method: "PATCH", body: JSON.stringify({ capacity, registrationOpen }) });
+      await request(`/admin/events/${encodeURIComponent(selectedId)}`, { method: "PATCH", body: JSON.stringify(selected?.rsvpProvider === "native" ? { capacity, registrationOpen } : { title: externalTitle, rsvpUrl: externalLink }) });
       await refresh(); setMessage("Registration settings saved.");
     } catch (issue) { setMessage(issue instanceof Error ? issue.message : "Unable to save."); }
     finally { setPending(false); }
@@ -68,12 +77,12 @@ export function OrganizerDashboard() {
     const values = Object.fromEntries(new FormData(form));
     setPending(true); setMessage("");
     try {
-      const result = await request("/admin/events", { method: "POST", body: JSON.stringify({ ...values,
+      const result = await request(editingId ? `/admin/events/${encodeURIComponent(editingId)}` : "/admin/events", { method: editingId ? "PUT" : "POST", body: JSON.stringify({ ...values,
         capacity: Number(values.capacity),
         startsAt: values.startsAt ? new Date(String(values.startsAt)).toISOString() : null,
         endsAt: values.endsAt ? new Date(String(values.endsAt)).toISOString() : null }) });
       const data = await request("/admin/events"); setEvents(data.events); await select(result.id, data.events);
-      setAdding(false); setMessage("Event added to the website. Set registration to open when ready.");
+      setAdding(false); setEditingId(null); setMessage(editingId ? "Event updated on the website." : newProvider === "native" ? "Event added to the website. Set registration to open when ready." : "Event added to the website with external registration.");
     } catch (issue) { setMessage(issue instanceof Error ? issue.message : "Unable to add event."); }
     finally { setPending(false); }
   }
@@ -110,25 +119,27 @@ export function OrganizerDashboard() {
 
   return (
     <div className="organizer-dashboard">
-      <button type="button" className="button button-blue" disabled={pending} onClick={() => setAdding(!adding)}>{adding ? "Close new event form" : "Add event"}</button>
-      {adding && <form className="organizer-settings event-create-form" onSubmit={createEvent}>
-        <h2>Add an event</h2>
-        <p>New events appear on the website with registration closed. Dates and times use your computer’s local time zone.</p>
+      <button type="button" className="button button-blue" disabled={pending} onClick={() => { setEditingId(null); setNewProvider("native"); setAdding(!adding); }}>{adding ? "Close event form" : "Add event"}</button>
+      {adding && <form key={editingId ?? "new"} className="organizer-settings event-create-form" onSubmit={createEvent}>
+        <h2>{editingId ? "Edit event" : "Add an event"}</h2>
+        <p>New events appear on the website. Website registration starts closed. Dates and times use your computer’s local time zone.</p>
         <fieldset disabled={pending}>
-          <label>Title<input name="title" maxLength={200} required /></label>
-          <label>Description<textarea name="synopsis" maxLength={2000} required rows={4} /></label>
-          <label>Start (optional)<input name="startsAt" type="datetime-local" /></label>
-          <label>End (optional)<input name="endsAt" type="datetime-local" /></label>
-          <label>Host<input name="host" maxLength={200} defaultValue="Philadelphia Space Forum" /></label>
-          <label>Venue<input name="location" maxLength={300} /></label>
-          <label>Street address<input name="address" maxLength={300} /></label>
-          <label>City<input name="city" maxLength={120} /></label>
-          <label>State<input name="state" maxLength={80} /></label>
-          <label>Speaker<input name="speaker" maxLength={200} /></label>
-          <label>Speaker bio<textarea name="speakerBio" maxLength={2000} rows={3} /></label>
-          <label>Topics (one per line)<textarea name="topics" maxLength={2000} rows={3} /></label>
-          <label>Capacity<input name="capacity" type="number" min={0} max={10000} defaultValue={20} required /></label>
-          <button className="button button-blue">{pending ? "Adding…" : "Create event"}</button>
+          <label>Registration<select name="rsvpProvider" value={newProvider} onChange={event => setNewProvider(event.target.value)}><option value="native">Website RSVP</option><option value="meetup">Meetup RSVP</option><option value="external">Other external RSVP</option></select></label>
+          {newProvider !== "native" && <label>Registration URL<input name="rsvpUrl" defaultValue={draft.rsvpUrl} type="url" placeholder="https://" maxLength={2000} required /></label>}
+          <label>Title<input name="title" defaultValue={draft.title ?? editingEvent?.title} maxLength={200} required /></label>
+          <label>Description<textarea name="synopsis" defaultValue={draft.synopsis} maxLength={2000} required rows={4} /></label>
+          <label>Start (optional)<input name="startsAt" defaultValue={localDate(draft.startsAt)} type="datetime-local" /></label>
+          <label>End (optional)<input name="endsAt" defaultValue={localDate(draft.endsAt)} type="datetime-local" /></label>
+          <label>Host<input name="host" maxLength={200} defaultValue={draft.host ?? "Philadelphia Space Forum"} /></label>
+          <label>Venue<input name="location" defaultValue={draft.location?.name} maxLength={300} /></label>
+          <label>Street address<input name="address" defaultValue={draft.location?.address} maxLength={300} /></label>
+          <label>City<input name="city" defaultValue={draft.location?.city} maxLength={120} /></label>
+          <label>State<input name="state" defaultValue={draft.location?.state} maxLength={80} /></label>
+          <label>Speaker<input name="speaker" defaultValue={draft.speaker?.name} maxLength={200} /></label>
+          <label>Speaker bio<textarea name="speakerBio" defaultValue={draft.speaker?.bio} maxLength={2000} rows={3} /></label>
+          <label>Topics (one per line)<textarea name="topics" defaultValue={draft.topics?.join("\n")} maxLength={2000} rows={3} /></label>
+          {newProvider === "native" ? <label>Capacity<input name="capacity" type="number" min={0} max={10000} defaultValue={editingEvent?.capacity ?? 20} required /></label> : <input type="hidden" name="capacity" value="0" />}
+          <button className="button button-blue">{pending ? "Saving…" : editingId ? "Save event" : "Create event"}</button>
         </fieldset>
       </form>}
       <div className="organizer-toolbar">
@@ -140,21 +151,29 @@ export function OrganizerDashboard() {
       </div>
       {selected && <>
         <form className="organizer-settings" onSubmit={save}>
+          {selected.rsvpProvider !== "native" ? <>
+            <h2>External registration</h2>
+            <p>Attendees and capacity are managed on the external event website.</p>
+            <label htmlFor="external-title">Event title</label><input id="external-title" value={externalTitle} onChange={e => setExternalTitle(e.target.value)} maxLength={200} required disabled={pending} />
+            <label htmlFor="external-link">Registration URL</label><input id="external-link" type="url" value={externalLink} onChange={e => setExternalLink(e.target.value)} required disabled={pending} />
+            <a className="text-link" href={selected.rsvpUrl} target="_blank" rel="noreferrer">Open registration website ↗</a>
+          </> : <>
           <p>{selected.confirmed} confirmed attendees</p>
           <label htmlFor="event-capacity">Capacity</label>
           <input id="event-capacity" type="number" min={selected.confirmed} max={10000} value={capacity} onChange={(event) => setCapacity(Number(event.target.value))} disabled={pending} required />
           <label className="checkbox-label"><input type="checkbox" checked={registrationOpen} onChange={(event) => setRegistrationOpen(event.target.checked)} disabled={pending} /> Open registration</label>
           <p className="form-note">Registration closes when a scheduled event starts. Events without a date stay open until you close them. Capacity counts registrations made on this website.</p>
+          </>}
           <button className="button button-blue" disabled={pending}>Save settings</button>
         </form>
-        <div className="organizer-event-actions"><button type="button" className="text-link event-delete" onClick={deleteEvent} disabled={pending}>Delete event</button>
-        <button type="button" className="text-link" onClick={exportCsv} disabled={!registrations.length || pending}>Download attendee CSV</button></div>
-        <div className="attendee-table-wrap"><table className="attendee-table">
+        <div className="organizer-event-actions"><button type="button" className="text-link" disabled={pending} onClick={() => { setEditingId(selectedId); setNewProvider(selected.rsvpProvider); setAdding(true); }}>Edit event</button><button type="button" className="text-link event-delete" onClick={deleteEvent} disabled={pending}>Delete event</button>
+        <button type="button" className="text-link" onClick={exportCsv} disabled={selected.rsvpProvider !== "native" || !registrations.length || pending}>Download attendee CSV</button></div>
+        {selected.rsvpProvider === "native" && <><div className="attendee-table-wrap"><table className="attendee-table">
           <caption>{selected.title} registrations</caption>
           <thead><tr><th>Name</th><th>Email</th><th>Status</th><th>Actions</th></tr></thead>
           <tbody>{registrations.map((row) => <tr key={row.id}><td>{row.name}</td><td>{row.email}</td><td>{row.status}</td><td>{row.status === "confirmed" && <button type="button" className="text-link" disabled={pending} onClick={() => cancel(row.id)}>Cancel RSVP<span className="sr-only"> for {row.name}</span></button>}</td></tr>)}</tbody>
         </table></div>
-        {!registrations.length && <p>No registrations yet.</p>}
+        {!registrations.length && <p>No registrations yet.</p>}</>}
       </>}
       {!events.length && <p>No events are available.</p>}
       {message && <p role="status">{message}</p>}

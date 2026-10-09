@@ -136,3 +136,29 @@ test("oversized requests are rejected and CSV export neutralizes spreadsheet for
   const preflight = await f.call("/admin/events", { method: "OPTIONS" });
   assert.match(preflight.headers.get("Access-Control-Allow-Methods"), /DELETE/);
 });
+
+ test("external events validate links, appear in organizer listing, and reject native registration", async (t) => {
+  const f = fixture(t);
+  const body = { title: "Meetup workshop", synopsis: "External event", capacity: 0, rsvpProvider: "meetup", rsvpUrl: "https://www.meetup.com/example/events/123/" };
+  assert.equal((await f.call("/admin/events", { admin: true, body: { ...body, rsvpUrl: "javascript:alert(1)" } })).status, 400);
+  const created = await (await f.call("/admin/events", { admin: true, body })).json();
+  const list = await (await f.call("/admin/events", { admin: true })).json();
+  assert.equal(list.events.find(e => e.id === created.id).rsvpProvider, "meetup");
+  assert.equal((await f.register("external@example.com", { eventId: created.id })).status, 409);
+  assert.equal((await f.call(`/admin/events/${created.id}`, { method: "PATCH", admin: true, body: { title: "Updated meetup", rsvpUrl: "https://example.com/register" } })).status, 200);
+  const publicList = await (await f.call("/events")).json();
+  assert.equal(publicList.events.find(e => e.id === created.id).title, "Updated meetup");
+});
+
+ test("full event edits preserve attendees and enforce capacity and registration method", async (t) => {
+  const f = fixture(t);
+  await f.register("retained@example.com");
+  const body = { title: "Edited workshop", synopsis: "Updated description", capacity: 3, rsvpProvider: "native", startsAt: new Date(Date.now()+86400000).toISOString(), location: "New venue" };
+  assert.equal((await f.call(`/admin/events/${eventId}`, { method: "PUT", body })).status, 401);
+  assert.equal((await f.call(`/admin/events/${eventId}`, { method: "PUT", admin: true, body: { ...body, capacity: 0 } })).status, 409);
+  assert.equal((await f.call(`/admin/events/${eventId}`, { method: "PUT", admin: true, body: { ...body, rsvpProvider: "external", rsvpUrl: "https://example.com" } })).status, 409);
+  assert.equal((await f.call(`/admin/events/${eventId}`, { method: "PUT", admin: true, body })).status, 200);
+  const listing = await (await f.call("/events")).json();
+  assert.equal(listing.events[0].location.name, "New venue");
+  assert.equal(f.sqlite.prepare("SELECT COUNT(*) AS n FROM registrations").get().n, 1);
+});

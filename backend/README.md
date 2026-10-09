@@ -54,7 +54,7 @@ Run these commands from the repository root with Node.js 22.13 or newer.
 
    Event seeds create registrations **closed with capacity 0**. Re-running the
    seed updates titles and dates without deleting attendees or overwriting your
-   capacity. Cancelled events are closed. Meetup events are not seeded.
+   capacity. Cancelled events are closed. Meetup and other external events are also seeded into the organizer dashboard.
 
 6. In the GitHub repository, open **Settings → Secrets and variables → Actions
    → Variables**. Add a repository variable named `RSVP_API_URL` containing the
@@ -94,7 +94,7 @@ Existing Meetup attendees are not imported or counted by the native system.
 - Confirmation emails, waitlists, and payments are not implemented. The form
   explicitly tells attendees to save their cancellation link.
 
-For new native events, add `rsvpProvider: "native"` in `app/data/events.ts` and
+For source-defined native events, add `rsvpProvider: "native"` in `app/data/events.ts` and
 run `npm run rsvp:seed`. Set a confirmed date/location in that file when known;
 use `null` dates while planning. Keep `rsvpProvider: "meetup"` and `rsvpUrl` for
 events with external registration.
@@ -150,4 +150,13 @@ rebuild. Registration starts closed; set capacity and open it when ready.
 **Delete event** removes an event from the public listing and closes registration;
 it retains attendee records and does not send cancellation emails. Export attendees
 before deletion if needed. Deleted events are not restored by subsequent seeds.
-The Meetup workshop continues to be managed in the website source and on Meetup.
+The Meetup workshop can be edited in the organizer dashboard; registrations stay on Meetup.
+
+## External events and editing
+
+Pull the latest main branch and run `npm.cmd run rsvp:seed` followed by
+`npm.cmd run rsvp:deploy`. The seed includes the existing Fundamentals workshop
+with its Meetup link, and preserves edits made in the organizer dashboard.
+Use Add event to choose Website RSVP, Meetup RSVP, or Other external RSVP.
+Use Edit event to update details. External attendee lists and capacity remain on
+the external platform. Events with attendee records retain their registration method.

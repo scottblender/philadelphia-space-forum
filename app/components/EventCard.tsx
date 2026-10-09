@@ -76,9 +76,9 @@ export function EventCard({ event }: { event: ForumEvent }) {
           <a className="text-link" href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${event.location.name}, ${address}`)}`} target="_blank" rel="noreferrer">Get directions <span aria-hidden="true">↗</span></a></>}
         </div>
         {state !== "cancelled" && state !== "past" && event.rsvpProvider === "native" && <RsvpForm eventId={event.id} title={event.title} isTest={event.isTest} />}
-        {state !== "cancelled" && event.rsvpProvider === "meetup" && (
+        {state !== "cancelled" && event.rsvpProvider !== "native" && (
           <a className="button button-blue" href={event.rsvpUrl} target="_blank" rel="noreferrer">
-            {state === "past" ? "View event on Meetup" : "RSVP on Meetup"} <span aria-hidden="true">↗</span>
+            {event.rsvpProvider === "meetup" ? (state === "past" ? "View event on Meetup" : "RSVP on Meetup") : (state === "past" ? "View event" : "RSVP on event website")} <span aria-hidden="true">↗</span>
           </a>
         )}
       </aside>
