@@ -258,3 +258,15 @@ test("registration requires explicit consent to current notice and records evide
   f.sqlite.prepare("UPDATE events SET starts_at = ?").run(Date.now() + 86400000);
   assert.equal((await f.call("/management/cancel", { body: { token } })).status, 200);
 });
+
+test("public attendance counts track registrations and cancellations without attendee identities", async t => {
+  const f = fixture(t, 2);
+  const read = async () => (await f.call(`/events/${eventId}`)).json();
+  assert.equal((await read()).confirmed, 0);
+  const registration = await (await f.register("count@example.com")).json();
+  const event = await read();
+  assert.equal(event.confirmed, 1); assert.equal(event.available, 1); assert.equal(event.capacity, 2);
+  assert.doesNotMatch(JSON.stringify(event), /count@example|Test attendee|cancellation_hash/);
+  await f.call("/cancel", { body: { token: registration.cancellationToken } });
+  assert.equal((await read()).confirmed, 0); assert.equal((await read()).available, 2);
+});

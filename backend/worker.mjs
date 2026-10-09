@@ -60,7 +60,7 @@ function publicEvent(event, now) {
   const available = Math.max(0, event.capacity - event.confirmed);
   return {
     id: event.id, title: event.title, startsAt: event.starts_at,
-    capacity: event.capacity, available,
+    capacity: event.capacity, confirmed: event.confirmed, available,
     open: Boolean(registrationProvider(event) === "native" && event.registration_open && event.capacity > 0 && (event.starts_at === null || event.starts_at > now) && available > 0),
     full: event.capacity > 0 && available === 0,
   };

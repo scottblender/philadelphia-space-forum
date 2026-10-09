@@ -85,6 +85,7 @@ function RsvpFields({ eventId, open, onBusyChange }: { eventId: string; open: bo
       const url = new URL(publicAsset("/rsvp/cancel/"), window.location.origin);
       url.hash = result.cancellationToken;
       setEmailSent(Boolean(result.emailSent)); setCancellationUrl(url.href);
+      window.dispatchEvent(new CustomEvent("rsvp-updated", { detail: eventId }));
     } catch (issue) {
       setError(issue instanceof Error ? issue.message : "Unable to register. Please try again.");
       if (widgetId.current) challengeApi()?.reset(widgetId.current);

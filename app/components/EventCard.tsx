@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import type { ForumEvent } from "../data/events";
 import { getEventState } from "../lib/eventState";
+import { EventAttendance } from "./EventAttendance";
 import { RsvpForm } from "./RsvpForm";
 
 const stateLabels = { upcoming: "Upcoming", live: "Happening now", past: "Past event", cancelled: "Cancelled" };
@@ -76,6 +77,7 @@ export function EventCard({ event }: { event: ForumEvent }) {
           {event.location.address && <><address>{event.location.address}<br />{event.location.city}, {event.location.state}</address>
           <a className="text-link" href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${event.location.name}, ${address}`)}`} target="_blank" rel="noreferrer">Get directions <span aria-hidden="true">↗</span></a></>}
         </div>
+        {event.rsvpProvider === "native" && <EventAttendance eventId={event.id} />}
         {state !== "cancelled" && state !== "past" && event.rsvpProvider === "native" && <RsvpForm eventId={event.id} title={event.title} isTest={event.isTest} />}
         {state !== "cancelled" && event.rsvpProvider !== "native" && (
           <a className="button button-blue" href={event.rsvpUrl} target="_blank" rel="noreferrer">
