@@ -284,3 +284,9 @@ input:focus-visible, select:focus-visible, summary:focus-visible { outline: 2px 
 
 .manage-rsvp-section { display: grid; gap: 28px; }
 .manage-rsvp-section .organizer-login { padding: 28px; border: 1px solid var(--line); }
+
+.manage-rsvp-section { padding-top: 32px; gap: 32px; grid-template-columns: minmax(0, 1fr); }
+.manage-rsvp-section > .organizer-settings, .manage-rsvp-section > .organizer-login { width: 100%; max-width: 560px; min-width: 0; margin: 0; padding: 28px; }
+.manage-rsvp-section h2 { margin: 0; overflow-wrap: anywhere; }
+.manage-rsvp-section input, .manage-rsvp-section select { max-width: 100%; }
+@media (max-width: 600px) { .manage-rsvp-section > .organizer-settings, .manage-rsvp-section > .organizer-login { padding: 20px; } }
