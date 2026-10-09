@@ -8,6 +8,7 @@ import { csvCell } from "../app/lib/rsvp.ts";
 const migration = await readFile(new URL("../backend/migrations/0001_rsvps.sql", import.meta.url), "utf8");
 const eventMigration = await readFile(new URL("../backend/migrations/0002_event_management.sql", import.meta.url), "utf8");
 const emailMigration = await readFile(new URL("../backend/migrations/0003_rsvp_email.sql", import.meta.url), "utf8");
+const consentMigration = await readFile(new URL("../backend/migrations/0004_registration_consent.sql", import.meta.url), "utf8");
 const origin = "https://philadelphiaspaceforum.org";
 const eventId = "cislunar-space-situational-awareness-workshop";
 // Public fixture value, not a production secret.
@@ -15,7 +16,7 @@ const adminToken = "test-organizer-token-0000000000000000000000";
 
 function fixture(t, capacity = 2) {
   const sqlite = new DatabaseSync(":memory:");
-  sqlite.exec("PRAGMA foreign_keys = ON"); sqlite.exec(migration); sqlite.exec(eventMigration); sqlite.exec(emailMigration);
+  sqlite.exec("PRAGMA foreign_keys = ON"); sqlite.exec(migration); sqlite.exec(eventMigration); sqlite.exec(emailMigration); sqlite.exec(consentMigration);
   sqlite.prepare("INSERT INTO events (id, title, capacity, registration_open) VALUES (?, ?, ?, 1)").run(eventId, "SSA workshop", capacity);
   const DB = { prepare(sql) {
     const statement = sqlite.prepare(sql);
@@ -39,7 +40,7 @@ function fixture(t, capacity = 2) {
     method, headers: { ...(requestOrigin ? { Origin: requestOrigin } : {}), ...(body ? { "Content-Type": "application/json" } : {}), ...(admin ? { Authorization: `Bearer ${adminToken}` } : {}) },
     ...(body ? { body: JSON.stringify(body) } : {}),
   }), env);
-  const register = (email, extra = {}) => call("/registrations", { body: { eventId, name: "Test attendee", email, turnstileToken: "valid", ...extra } });
+  const register = (email, extra = {}) => call("/registrations", { body: { eventId, name: "Test attendee", email, turnstileToken: "valid", consent: true, privacyNoticeVersion: "2026-10-08", ...extra } });
   return { sqlite, env, call, register };
 }
 
@@ -225,4 +226,14 @@ test("email failure preserves RSVP and management recovery hides email existence
   const unknown = await f.call("/management/request", { body: { ...body, email: "unknown@example.com" } });
   assert.equal(unknown.status, 200); assert.equal((await unknown.json()).message, message); assert.equal(emails.length, 1);
   assert.equal((await f.call("/management/request", { body: { ...body, turnstileToken: "bad" } })).status, 400);
+});
+
+test("registration requires explicit consent to current notice and records evidence", async t => {
+  const f = fixture(t);
+  for (const consent of [false, undefined, "true"]) assert.equal((await f.register("consent@example.com", { consent })).status, 400);
+  assert.equal((await f.register("consent@example.com", { privacyNoticeVersion: "old" })).status, 400);
+  assert.equal(f.sqlite.prepare("SELECT COUNT(*) AS n FROM registrations").get().n, 0);
+  const before = Date.now(); assert.equal((await f.register("consent@example.com")).status, 201);
+  const stored = f.sqlite.prepare("SELECT consent_at, privacy_notice_version FROM registrations").get();
+  assert.ok(stored.consent_at >= before); assert.equal(stored.privacy_notice_version, "2026-10-08");
 });

@@ -174,3 +174,11 @@ Unknown addresses receive the same response. Opening a link never cancels an RSV
 Email acceptance does not guarantee inbox delivery; check Resend logs and spam.
 If sending fails, the RSVP remains confirmed and a backup cancellation link is shown.
 No past attendees are emailed automatically. Email changes and reminders are not sent.
+
+## Registration consent
+
+New native registrations require explicit agreement to Privacy Notice version
+2026-10-08. Apply migration 0004 with `npm.cmd run rsvp:migrate` before deploying.
+The API records the timestamp and notice version. Existing records remain null;
+consent is not backfilled. Cancellation is not data erasure. No automatic attendee
+retention or deletion job is configured. The notice describes the current behavior.

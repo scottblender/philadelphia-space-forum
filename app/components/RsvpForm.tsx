@@ -41,6 +41,7 @@ function RsvpFields({ eventId, open, onBusyChange }: { eventId: string; open: bo
   const [error, setError] = useState("");
   const [scriptReady, setScriptReady] = useState(false);
   const [challenge, setChallenge] = useState("");
+  const [consent, setConsent] = useState(false);
   const [pending, setPending] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
   const [cancellationUrl, setCancellationUrl] = useState("");
@@ -73,13 +74,13 @@ function RsvpFields({ eventId, open, onBusyChange }: { eventId: string; open: bo
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (pending || !challenge) return;
+    if (pending || !challenge || !consent) return;
     setPending(true); setError("");
     const data = new FormData(event.currentTarget);
     try {
       const result = await rsvpRequest("/registrations", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ eventId, name: data.get("name"), email: data.get("email"), turnstileToken: challenge }),
+        body: JSON.stringify({ eventId, name: data.get("name"), email: data.get("email"), turnstileToken: challenge, consent, privacyNoticeVersion: "2026-10-08" }),
       });
       const url = new URL(publicAsset("/rsvp/cancel/"), window.location.origin);
       url.hash = result.cancellationToken;
@@ -115,11 +116,14 @@ function RsvpFields({ eventId, open, onBusyChange }: { eventId: string; open: bo
             <input id={`${eventId}-name`} name="name" autoComplete="name" maxLength={120} required disabled={pending} />
             <label htmlFor={`${eventId}-email`}>Email address</label>
             <input id={`${eventId}-email`} name="email" type="email" autoComplete="email" maxLength={254} required disabled={pending} />
-            <p className="form-note">Your name and email are only available to the organizers and are used to manage this event and send registration emails.</p>
+            <label className="rsvp-consent" htmlFor={`${eventId}-consent`}>
+              <input id={`${eventId}-consent`} name="consent" type="checkbox" checked={consent} onChange={event => setConsent(event.target.checked)} required disabled={pending} />
+              <span>I agree to share my name and email with Philadelphia Space Forum organizers to manage my registration and send emails about this event. I have read the <a href={publicAsset("/privacy/")} target="_blank" rel="noreferrer">Privacy Notice</a>.</span>
+            </label>
             {open && availability?.turnstileSiteKey && <Script id="rsvp-turnstile" src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" strategy="afterInteractive" onReady={() => setScriptReady(true)} onError={() => setError("Verification could not load. Please try again later.")} />}
             <div ref={widget} />
             {availability?.open && !availability.turnstileSiteKey && <p>Registration is temporarily unavailable.</p>}
-            <button className="button button-blue" type="submit" disabled={pending || !challenge}>{pending ? "Reserving your place…" : "Reserve my place"}</button>
+            <button className="button button-blue" type="submit" disabled={pending || !challenge || !consent}>{pending ? "Reserving your place…" : "Reserve my place"}</button>
           </form>
       )}
       {error && <p className="form-error" role="alert">{error}</p>}

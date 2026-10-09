@@ -290,3 +290,11 @@ input:focus-visible, select:focus-visible, summary:focus-visible { outline: 2px 
 .manage-rsvp-section h2 { margin: 0; overflow-wrap: anywhere; }
 .manage-rsvp-section input, .manage-rsvp-section select { max-width: 100%; }
 @media (max-width: 600px) { .manage-rsvp-section > .organizer-settings, .manage-rsvp-section > .organizer-login { padding: 20px; } }
+
+.rsvp-form .rsvp-consent { display: flex; align-items: flex-start; gap: 12px; font-weight: 400; line-height: 1.6; }
+.rsvp-form .rsvp-consent input { flex: 0 0 20px; width: 20px; min-height: 20px; height: 20px; margin: 3px 0 0; padding: 0; accent-color: var(--cyan-blue); }
+.rsvp-consent a { color: var(--cyan-blue); text-decoration: underline; text-underline-offset: 3px; }
+.privacy-content { max-width: 760px; padding-top: 32px; padding-bottom: 80px; }
+.privacy-content h2 { margin: 32px 0 12px; font-size: 24px; }
+.privacy-content p { line-height: 1.75; margin: 12px 0; }
+.privacy-content a { color: var(--cyan-blue); text-decoration: underline; }

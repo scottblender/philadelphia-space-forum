@@ -140,6 +140,7 @@ async function route(request, env, path) {
 
   if (path === "/registrations" && method === "POST") {
     const data = await readJson(request);
+    if (data.consent !== true || data.privacyNoticeVersion !== "2026-10-08") throw new HttpError(400, "Please agree to the current Privacy Notice before registering.");
     const id = typeof data.eventId === "string" ? data.eventId : "";
     const name = typeof data.name === "string" ? data.name.trim() : "";
     const email = typeof data.email === "string" ? data.email.trim().toLowerCase() : "";
@@ -155,12 +156,12 @@ async function route(request, env, path) {
     // count-then-write step that could overbook the last seat.
     try {
       const result = await env.DB.prepare(`INSERT INTO registrations
-        (id, event_id, name, email, cancellation_hash, created_at)
-        SELECT ?, e.id, ?, ?, ?, ? FROM events e
+        (id, event_id, name, email, cancellation_hash, created_at, consent_at, privacy_notice_version)
+        SELECT ?, e.id, ?, ?, ?, ?, ?, ? FROM events e
         WHERE e.id = ? AND e.registration_open = 1 AND e.deleted = 0 AND (e.starts_at IS NULL OR e.starts_at > ?)
         AND (SELECT COUNT(*) FROM registrations r WHERE r.event_id = e.id AND r.status = 'confirmed') < e.capacity
         AND NOT EXISTS (SELECT 1 FROM registrations r WHERE r.event_id = e.id AND r.email = ? AND r.status = 'confirmed')`)
-        .bind(registrationId, name, email, await hash(token), Date.now(), id, Date.now(), email).run();
+        .bind(registrationId, name, email, await hash(token), Date.now(), Date.now(), "2026-10-08", id, Date.now(), email).run();
       if (!result.meta.changes) throw new HttpError(409, "This event is full, registration is closed, or this email already has an RSVP. Contact the organizers if you need help.");
     } catch (error) {
       if (error instanceof HttpError) throw error;
