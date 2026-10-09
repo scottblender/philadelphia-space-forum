@@ -15,7 +15,6 @@ export function SiteHeader({ theme = "light" }: { theme?: "light" | "dark" }) {
         <nav aria-label="Main navigation">
           <Link href="/about" aria-current={pathname.endsWith("/about") ? "page" : undefined}>About us</Link>
           <Link href="/events" aria-current={/\/(events|calendar)$/.test(pathname) ? "page" : undefined}>Events</Link>
-          <Link href="/organizer/" aria-current={pathname.endsWith("/organizer") ? "page" : undefined}>Organizer login</Link>
         </nav>
         <a className="nav-join" href="https://www.instagram.com/philadelphiaspaceforum/" target="_blank" rel="noreferrer">Instagram <span>↗</span></a>
       </div>
