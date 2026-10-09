@@ -249,4 +249,31 @@ input:focus-visible, select:focus-visible, summary:focus-visible { outline: 2px 
 .event-create-form label { display: grid; gap: .5rem; }
 .event-create-form input, .event-create-form textarea, .organizer-toolbar select { background: #141414; color: #fff; border: 1px solid #555; padding: .75rem; font: inherit; width: 100%; box-sizing: border-box; }
 .event-create-form textarea { resize: vertical; }
-.event-delete { color: #ff9d8d; margin: 1rem; }
+.event-delete { color: #ff9d8d; }
+
+/* Organizer controls share a consistent rhythm and wrap on smaller screens. */
+.organizer-dashboard { padding-top: 28px; }
+.organizer-dashboard > .button { margin-bottom: 28px; }
+.organizer-toolbar { display: flex; align-items: flex-end; gap: 24px; margin-bottom: 32px; }
+.organizer-event-picker { flex: 1; min-width: 0; display: grid; gap: 10px; }
+.organizer-event-picker label { font-size: 14px; font-weight: 600; }
+.organizer-toolbar select { min-height: 48px; padding: 12px 16px; }
+.organizer-toolbar > .text-link { flex-shrink: 0; margin-bottom: 4px; min-height: 44px; }
+.organizer-settings { padding: 28px; gap: 16px; }
+.organizer-settings > .button { justify-self: start; margin-top: 8px; }
+.organizer-event-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 16px 32px; margin: 8px 0 28px; }
+.organizer-event-actions .text-link { min-height: 44px; }
+.event-create-form { max-width: 760px; margin: 0 0 32px; }
+.event-create-form fieldset { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 24px; }
+.event-create-form label:has(textarea), .event-create-form label:first-child, .event-create-form label:has([name="address"]) { grid-column: 1 / -1; }
+.event-create-form fieldset > .button { justify-self: start; margin-top: 4px; }
+.event-create-form input, .event-create-form textarea { min-height: 48px; }
+.organizer-dashboard .button:disabled, .organizer-dashboard .text-link:disabled { opacity: .45; cursor: not-allowed; }
+@media (max-width: 640px) {
+  .organizer-dashboard { padding-top: 20px; }
+  .organizer-toolbar { flex-direction: column; align-items: stretch; gap: 16px; }
+  .organizer-toolbar > .text-link { align-self: flex-start; }
+  .organizer-settings { padding: 20px; }
+  .event-create-form fieldset { grid-template-columns: minmax(0, 1fr); gap: 18px; }
+  .organizer-event-actions { gap: 12px 24px; }
+}

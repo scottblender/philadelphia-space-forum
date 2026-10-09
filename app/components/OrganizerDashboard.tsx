@@ -130,10 +130,10 @@ export function OrganizerDashboard() {
         </fieldset>
       </form>}
       <div className="organizer-toolbar">
-        <label htmlFor="organizer-event">Event</label>
+        <div className="organizer-event-picker"><label htmlFor="organizer-event">Event</label>
         <select id="organizer-event" value={selectedId} disabled={pending} onChange={async (event) => {
           setPending(true); try { await select(event.target.value); } catch { setMessage("Unable to load attendees."); } finally { setPending(false); }
-        }}>{events.map((event) => <option key={event.id} value={event.id}>{event.title}</option>)}</select>
+        }}>{events.map((event) => <option key={event.id} value={event.id}>{event.title}</option>)}</select></div>
         <button type="button" className="text-link" disabled={pending} onClick={() => { setSignedIn(false); setAccessKey(""); setRegistrations([]); setEvents([]); setSelectedId(""); setMessage(""); }}>Sign out</button>
       </div>
       {selected && <>
@@ -145,8 +145,8 @@ export function OrganizerDashboard() {
           <p className="form-note">Registration closes when a scheduled event starts. Events without a date stay open until you close them. Capacity counts registrations made on this website.</p>
           <button className="button button-blue" disabled={pending}>Save settings</button>
         </form>
-        <button type="button" className="text-link event-delete" onClick={deleteEvent} disabled={pending}>Delete event</button>
-        <button type="button" className="text-link" onClick={exportCsv} disabled={!registrations.length || pending}>Download attendee CSV</button>
+        <div className="organizer-event-actions"><button type="button" className="text-link event-delete" onClick={deleteEvent} disabled={pending}>Delete event</button>
+        <button type="button" className="text-link" onClick={exportCsv} disabled={!registrations.length || pending}>Download attendee CSV</button></div>
         <div className="attendee-table-wrap"><table className="attendee-table">
           <caption>{selected.title} registrations</caption>
           <thead><tr><th>Name</th><th>Email</th><th>Status</th><th>Actions</th></tr></thead>
