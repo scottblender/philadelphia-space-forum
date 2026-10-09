@@ -243,3 +243,10 @@ input:focus-visible, select:focus-visible, summary:focus-visible { outline: 2px 
   .footer-links { gap: 0; }
   .footer-links a { min-height: 44px; display: inline-flex; align-items: center; align-self: flex-start; }
 }
+
+.event-create-form { margin: 2rem 0; }
+.event-create-form fieldset { border: 0; padding: 0; display: grid; gap: 1rem; min-width: 0; }
+.event-create-form label { display: grid; gap: .5rem; }
+.event-create-form input, .event-create-form textarea, .organizer-toolbar select { background: #141414; color: #fff; border: 1px solid #555; padding: .75rem; font: inherit; width: 100%; box-sizing: border-box; }
+.event-create-form textarea { resize: vertical; }
+.event-delete { color: #ff9d8d; margin: 1rem; }

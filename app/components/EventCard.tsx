@@ -43,11 +43,11 @@ export function EventCard({ event }: { event: ForumEvent }) {
         <h2 id={`${event.id}-title`}>{event.title}</h2>
         <p className="event-synopsis">{event.synopsis}</p>
         <p className="event-host">Hosted by {event.host}</p>
-        <div className="event-speaker">
+        {event.speaker.name && <div className="event-speaker">
           <p className="eyebrow"><span /> {event.speaker.role}</p>
           <h3>{event.speaker.name}</h3>
           <p>{event.speaker.bio}</p>
-        </div>
+        </div>}
         <button
           type="button"
           className="text-link event-details-toggle"
@@ -67,7 +67,7 @@ export function EventCard({ event }: { event: ForumEvent }) {
         <div>
           <p className="eyebrow"><span /> When</p>
           <p className="event-date">{event.startsAt ? <time dateTime={event.startsAt}>{date}</time> : date}</p>
-          {event.startsAt && event.endsAt && <p className="event-time">{formatTime(event.startsAt)} – {formatTime(event.endsAt, true)}</p>}
+          {event.startsAt && <p className="event-time">{formatTime(event.startsAt, !event.endsAt)}{event.endsAt && <> – {formatTime(event.endsAt, true)}</>}</p>}
         </div>
         <div>
           <p className="eyebrow"><span /> Where</p>

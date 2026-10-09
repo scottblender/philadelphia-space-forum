@@ -6,6 +6,7 @@ import worker from "../backend/worker.mjs";
 import { csvCell } from "../app/lib/rsvp.ts";
 
 const migration = await readFile(new URL("../backend/migrations/0001_rsvps.sql", import.meta.url), "utf8");
+const eventMigration = await readFile(new URL("../backend/migrations/0002_event_management.sql", import.meta.url), "utf8");
 const origin = "https://philadelphiaspaceforum.org";
 const eventId = "cislunar-space-situational-awareness-workshop";
 // Public fixture value, not a production secret.
@@ -13,7 +14,7 @@ const adminToken = "test-organizer-token-0000000000000000000000";
 
 function fixture(t, capacity = 2) {
   const sqlite = new DatabaseSync(":memory:");
-  sqlite.exec("PRAGMA foreign_keys = ON"); sqlite.exec(migration);
+  sqlite.exec("PRAGMA foreign_keys = ON"); sqlite.exec(migration); sqlite.exec(eventMigration);
   sqlite.prepare("INSERT INTO events (id, title, capacity, registration_open) VALUES (?, ?, ?, 1)").run(eventId, "SSA workshop", capacity);
   const DB = { prepare(sql) {
     const statement = sqlite.prepare(sql);
@@ -111,4 +112,27 @@ test("oversized requests are rejected and CSV export neutralizes spreadsheet for
   assert.equal((await f.register("size@example.com", { name: "x".repeat(9000) })).status, 413);
   assert.equal(csvCell('  =HYPERLINK("https://example.com")'), '"\'  =HYPERLINK(""https://example.com"")"');
   assert.equal(csvCell("ordinary@example.com"), '"ordinary@example.com"');
+});
+
+ test("organizers create public events and delete them while preserving attendee records", async (t) => {
+  const f = fixture(t);
+  const body = { title: "New workshop", synopsis: "Learn orbital motion", capacity: 10, location: "Philadelphia" };
+  assert.equal((await f.call("/admin/events", { body })).status, 401);
+  assert.equal((await f.call("/admin/events", { admin: true, body: { ...body, startsAt: "bad" } })).status, 400);
+  const created = await f.call("/admin/events", { admin: true, body });
+  assert.equal(created.status, 201);
+  const { id } = await created.json();
+  const listing = await (await f.call("/events")).json();
+  assert.equal(listing.events[0].title, body.title);
+  assert.equal(listing.events[0].rsvpProvider, "native");
+  assert.equal((await f.call(`/admin/events/${id}`, { method: "DELETE" })).status, 401);
+  await f.register("kept@example.com");
+  assert.equal((await f.call(`/admin/events/${eventId}`, { method: "DELETE", admin: true })).status, 200);
+  assert.equal(f.sqlite.prepare("SELECT COUNT(*) AS n FROM registrations").get().n, 1);
+  assert.equal((await f.register("blocked@example.com")).status, 404);
+  assert.equal((await (await f.call("/events")).json()).deletedIds.includes(eventId), true);
+  assert.equal((await f.call(`/admin/events/${id}`, { method: "DELETE", admin: true })).status, 200);
+  assert.equal((await (await f.call("/events")).json()).events.length, 0);
+  const preflight = await f.call("/admin/events", { method: "OPTIONS" });
+  assert.match(preflight.headers.get("Access-Control-Allow-Methods"), /DELETE/);
 });

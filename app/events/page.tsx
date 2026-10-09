@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
-import { EventCard } from "../components/EventCard";
+import { EventList } from "../components/EventList";
 import { SiteFooter } from "../components/SiteFooter";
 import { SiteHeader } from "../components/SiteHeader";
-import { events } from "../data/events";
 
 export const metadata: Metadata = {
   title: "Events | Philadelphia Space Forum",
@@ -21,7 +20,7 @@ export default function EventsPage() {
         <p className="inner-hero-aside">Research, conversation, and hands-on exploration with Philadelphia&apos;s space community.</p>
       </section>
       <section className="page-width events-list" aria-label="Forum events">
-        {events.map((event) => <EventCard key={event.id} event={event} />)}
+        <EventList />
       </section>
       <SiteFooter />
     </main>

@@ -60,7 +60,7 @@ function publicEvent(event, now) {
 async function getEvent(db, id) {
   if (!eventIdPattern.test(id)) throw new HttpError(404, "Event not found.");
   const event = await db.prepare(`SELECT e.*, (SELECT COUNT(*) FROM registrations r
-    WHERE r.event_id = e.id AND r.status = 'confirmed') AS confirmed FROM events e WHERE e.id = ?`).bind(id).first();
+    WHERE r.event_id = e.id AND r.status = 'confirmed') AS confirmed FROM events e WHERE e.id = ? AND e.deleted = 0`).bind(id).first();
   if (!event) throw new HttpError(404, "Event not found.");
   return event;
 }
@@ -83,6 +83,12 @@ async function route(request, env, path) {
   const method = request.method;
   if (path === "/health" && method === "GET") return response({ ok: true });
   if (!env.DB) throw new HttpError(503, "Registration is temporarily unavailable.");
+
+  if (path === "/events" && method === "GET") {
+    const result = await env.DB.prepare("SELECT id, details_json, deleted FROM events").all();
+    return response({ events: result.results.filter(e => !e.deleted && e.details_json).map(e => JSON.parse(e.details_json)),
+      deletedIds: result.results.filter(e => e.deleted).map(e => e.id) });
+  }
 
   const eventMatch = path.match(/^\/events\/([^/]+)$/);
   if (eventMatch && method === "GET") {
@@ -108,7 +114,7 @@ async function route(request, env, path) {
       const result = await env.DB.prepare(`INSERT INTO registrations
         (id, event_id, name, email, cancellation_hash, created_at)
         SELECT ?, e.id, ?, ?, ?, ? FROM events e
-        WHERE e.id = ? AND e.registration_open = 1 AND (e.starts_at IS NULL OR e.starts_at > ?)
+        WHERE e.id = ? AND e.registration_open = 1 AND e.deleted = 0 AND (e.starts_at IS NULL OR e.starts_at > ?)
         AND (SELECT COUNT(*) FROM registrations r WHERE r.event_id = e.id AND r.status = 'confirmed') < e.capacity
         AND NOT EXISTS (SELECT 1 FROM registrations r WHERE r.event_id = e.id AND r.email = ? AND r.status = 'confirmed')`)
         .bind(registrationId, name, email, await hash(token), Date.now(), id, Date.now(), email).run();
@@ -134,10 +140,38 @@ async function route(request, env, path) {
     await requireOrganizer(request, env);
     if (path === "/admin/events" && method === "GET") {
       const result = await env.DB.prepare(`SELECT e.*, (SELECT COUNT(*) FROM registrations r WHERE r.event_id = e.id AND r.status = 'confirmed') AS confirmed
-        FROM events e ORDER BY e.starts_at DESC`).all();
+        FROM events e WHERE e.deleted = 0 ORDER BY e.starts_at DESC`).all();
       return response({ events: result.results });
     }
+    if (path === "/admin/events" && method === "POST") {
+      const data = await readJson(request);
+      const text = (key, max, required = false) => {
+        const value = typeof data[key] === "string" ? data[key].trim() : "";
+        if ((required && !value) || value.length > max || /[\x00-\x08\x0b\x0c\x0e-\x1f]/.test(value)) throw new HttpError(400, `Enter a valid ${key}.`);
+        return value;
+      };
+      const title = text("title", 200, true), synopsis = text("synopsis", 2000, true);
+      const startsAt = data.startsAt || null, endsAt = data.endsAt || null;
+      if ((startsAt && (typeof startsAt !== "string" || !Number.isFinite(Date.parse(startsAt)))) ||
+          (endsAt && (typeof endsAt !== "string" || !Number.isFinite(Date.parse(endsAt)) || !startsAt || Date.parse(endsAt) <= Date.parse(startsAt))))
+        throw new HttpError(400, "Enter valid dates with the end after the start.");
+      if (!Number.isInteger(data.capacity) || data.capacity < 0 || data.capacity > 10000) throw new HttpError(400, "Enter a capacity between 0 and 10,000.");
+      const id = "event-" + crypto.randomUUID();
+      const details = { id, title, synopsis, startsAt, endsAt, timeZone: "America/New_York", status: "scheduled",
+        category: "Workshop", host: text("host", 200) || "Philadelphia Space Forum",
+        location: { name: text("location", 300) || "To be announced", address: text("address", 300), city: text("city", 120), state: text("state", 80) },
+        speaker: { name: text("speaker", 200), role: "Workshop leader", bio: text("speakerBio", 2000) },
+        topics: text("topics", 2000).split("\n").map(t => t.trim()).filter(Boolean), rsvpProvider: "native" };
+      await env.DB.prepare("INSERT INTO events (id, title, starts_at, capacity, details_json) VALUES (?, ?, ?, ?, ?)")
+        .bind(id, title, startsAt ? Date.parse(startsAt) : null, data.capacity, JSON.stringify(details)).run();
+      return response({ id }, 201);
+    }
     const adminEvent = path.match(/^\/admin\/events\/([^/]+)$/);
+    if (adminEvent && method === "DELETE") {
+      await getEvent(env.DB, adminEvent[1]);
+      await env.DB.prepare("UPDATE events SET deleted = 1, registration_open = 0 WHERE id = ?").bind(adminEvent[1]).run();
+      return response({ deleted: true });
+    }
     if (adminEvent && method === "PATCH") {
       await getEvent(env.DB, adminEvent[1]);
       const data = await readJson(request);
@@ -180,7 +214,7 @@ export default {
     if (origin) {
       result.headers.set("Access-Control-Allow-Origin", origin);
       result.headers.set("Vary", "Origin");
-      result.headers.set("Access-Control-Allow-Methods", "GET, POST, PATCH, OPTIONS");
+      result.headers.set("Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE, OPTIONS");
       result.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
     }
     return result;

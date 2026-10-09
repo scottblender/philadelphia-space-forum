@@ -51,7 +51,8 @@ GITHUB_REPOSITORY=scottblender/philadelphia-space-forum PAGES_BASE_PATH='' npm r
 ## Native RSVP backend
 
 The first workshop keeps Meetup. The Situational Awareness test workshop opens
-a native RSVP modal. Its form remains a preview until the Cloudflare Worker and
+a native RSVP modal. Organizers can add and delete native events in `/organizer/`;
+the event page loads these changes from the database without rebuilding. Its form remains a preview until the Cloudflare Worker and
 D1 database are activated and the event is opened in `/organizer/`.
 
 See [backend/README.md](backend/README.md) for the one-time setup, organizer

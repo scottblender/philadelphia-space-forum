@@ -132,3 +132,22 @@ Useful official guides:
 Cloudflare activation is required before real submissions can be verified on
 the live website. Do not interpret a frontend preview or successful local test
 as a deployed database.
+
+## Event management update
+
+After pulling this update, apply the new migration and deploy the backend:
+
+```powershell
+npm.cmd run rsvp:migrate
+npm.cmd run rsvp:seed
+npm.cmd run rsvp:deploy
+```
+
+The seed now invokes Wrangler directly through Node on Windows and other platforms.
+Sign out and back in to `/organizer/`. Use **Add event** to enter the event details.
+Events are published to the event page directly from the database without a website
+rebuild. Registration starts closed; set capacity and open it when ready.
+**Delete event** removes an event from the public listing and closes registration;
+it retains attendee records and does not send cancellation emails. Export attendees
+before deletion if needed. Deleted events are not restored by subsequent seeds.
+The Meetup workshop continues to be managed in the website source and on Meetup.
