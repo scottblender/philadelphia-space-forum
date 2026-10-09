@@ -183,4 +183,4 @@ The API records the timestamp and notice version. Existing records remain null;
 consent is not backfilled. Cancellation is not data erasure. No automatic attendee
 retention or deletion job is configured. The notice describes the current behavior.
 
-Organizers can permanently delete confirmed or cancelled attendee records from the dashboard. Apply migration 0005 before deploying: its trigger atomically removes associated management tokens. Deletion releases confirmed capacity and removes consent evidence; existing exports and delivered emails remain separate.
+Organizers can permanently delete confirmed or cancelled attendee records from the dashboard. Apply migration 0005 before deploying: its foreign-key cascade atomically removes associated management tokens. Deletion releases confirmed capacity and removes consent evidence; existing exports and delivered emails remain separate.
