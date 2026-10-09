@@ -102,12 +102,13 @@ async function sendManagementEmail(env, registration, event, confirmation = fals
   const when = event.starts_at ? new Intl.DateTimeFormat("en-US", { dateStyle: "full", timeStyle: "short", timeZone: "America/New_York" }).format(new Date(event.starts_at)) + " (Eastern time)" : "Date to be announced";
   const where = details.eventType === "online" ? "Online" : details.location?.name || "Location to be announced";
   const heading = confirmation ? "Your RSVP is confirmed" : "Manage your RSVP";
-  const text = `${heading}\n\n${event.title}\n${when}\n${where}\n\nView or cancel your RSVP: ${url}\n\nThis link expires in 30 days. Request another at ${siteOrigin}/rsvp/manage/. If you did not request this email, you can ignore it.`;
+  const expirationNote = event.starts_at ? "This link stays valid until the event starts and follows any changes to the event date." : "This link expires in 30 days. If a date is added, it stays valid until the event starts.";
+  const text = `${heading}\n\n${event.title}\n${when}\n${where}\n\nView or cancel your RSVP: ${url}\n\n${expirationNote} Request another at ${siteOrigin}/rsvp/manage/. If you did not request this email, you can ignore it.`;
   try {
     const sent = await fetch("https://api.resend.com/emails", { method: "POST", signal: AbortSignal.timeout(10000),
       headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, "Content-Type": "application/json", "Idempotency-Key": `rsvp-${tokenHash}` },
       body: JSON.stringify({ from: emailFrom, to: [registration.email], subject: `${heading}: ${event.title}`, text,
-        html: `<h1>${escapeHtml(heading)}</h1><p>${escapeHtml(event.title)}</p><p>${escapeHtml(when)}<br>${escapeHtml(where)}</p><p><a href="${url}">Manage RSVP</a></p><p>This link expires in 30 days. <a href="${siteOrigin}/rsvp/manage/">Request a new link</a>.</p><p>If you did not request this email, you can ignore it.</p>` }) });
+        html: `<h1>${escapeHtml(heading)}</h1><p>${escapeHtml(event.title)}</p><p>${escapeHtml(when)}<br>${escapeHtml(where)}</p><p><a href="${url}">Manage RSVP</a></p><p>${escapeHtml(expirationNote)} <a href="${siteOrigin}/rsvp/manage/">Request a new link</a>.</p><p>If you did not request this email, you can ignore it.</p>` }) });
     if (sent.ok) return true;
   } catch {}
   await env.DB.prepare("DELETE FROM management_tokens WHERE token_hash = ?").bind(tokenHash).run();
@@ -115,8 +116,8 @@ async function sendManagementEmail(env, registration, event, confirmation = fals
 }
 async function managementRegistration(db, token) {
   if (typeof token !== "string" || !/^[a-f0-9-]{72}$/.test(token)) throw new HttpError(400, "This management link is invalid.");
-  const row = await db.prepare(`SELECT r.id, r.event_id, r.status FROM management_tokens t JOIN registrations r ON r.id = t.registration_id
-    WHERE t.token_hash = ? AND t.expires_at > ?`).bind(await hash(token), Date.now()).first();
+  const row = await db.prepare(`SELECT r.id, r.event_id, r.status FROM management_tokens t JOIN registrations r ON r.id = t.registration_id JOIN events e ON e.id = r.event_id
+    WHERE t.token_hash = ? AND COALESCE(e.starts_at, t.expires_at) > ?`).bind(await hash(token), Date.now()).first();
   if (!row) throw new HttpError(401, "This link has expired. Request a new link below.");
   return row;
 }
@@ -189,7 +190,7 @@ async function route(request, env, path) {
         .bind(await hash(key), now, now - 60000).run();
       if (!result.meta.changes) throw new HttpError(429, "Please wait a minute before requesting another link.");
     }
-    await env.DB.prepare("DELETE FROM management_tokens WHERE expires_at <= ?").bind(now).run();
+    await env.DB.prepare("DELETE FROM management_tokens WHERE token_hash IN (SELECT t.token_hash FROM management_tokens t JOIN registrations r ON r.id = t.registration_id JOIN events e ON e.id = r.event_id WHERE COALESCE(e.starts_at, t.expires_at) <= ?)").bind(now).run();
     const registration = await env.DB.prepare("SELECT id, email FROM registrations WHERE event_id = ? AND email = ? AND status = 'confirmed'").bind(id, email).first();
     if (registration) { try { await sendManagementEmail(env, registration, event); } catch {} }
     return response({ message: "If you have an active RSVP for this event, a management link will be emailed to you. Check your inbox and spam folder." });

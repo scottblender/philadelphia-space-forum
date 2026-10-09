@@ -168,7 +168,7 @@ an encrypted Worker secret. Emails use Philadelphia Space Forum
 <events@philadelphiaspaceforum.org>. Pull main, run `npm.cmd run rsvp:migrate`,
 then `npm.cmd run rsvp:deploy`. Confirmation emails are sent for new native RSVPs.
 Existing attendees can use `/rsvp/manage/` to request a management link.
-Management links expire after 30 days and only hashed tokens persist. Requesting
+Management links stay valid until the current event start time, including when organizers change the date. Undated events use a 30-day expiration from issuance. Only hashed tokens persist. Requesting
 links requires Turnstile and is limited to one per minute per email and per IP.
 Unknown addresses receive the same response. Opening a link never cancels an RSVP.
 Email acceptance does not guarantee inbox delivery; check Resend logs and spam.

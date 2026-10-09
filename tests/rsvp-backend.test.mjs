@@ -237,3 +237,24 @@ test("registration requires explicit consent to current notice and records evide
   const stored = f.sqlite.prepare("SELECT consent_at, privacy_notice_version FROM registrations").get();
   assert.ok(stored.consent_at >= before); assert.equal(stored.privacy_notice_version, "2026-10-08");
 });
+
+ test("dated management links follow the event date beyond the fallback expiration", async t => {
+  const f = fixture(t); f.env.RESEND_API_KEY = "fixture-email-key";
+  const verification = globalThis.fetch; let email;
+  globalThis.fetch = async (url, init) => {
+    if (url === "https://api.resend.com/emails") { email = JSON.parse(init.body); return Response.json({ id: "test-email" }); }
+    return verification(url, init);
+  };
+  f.sqlite.prepare("UPDATE events SET starts_at = ?").run(Date.now() + 90 * 86400000);
+  await f.register("dated@example.com");
+  const token = email.text.match(/\/rsvp\/manage\/#([a-f0-9-]{72})/)[1];
+  assert.match(email.text, /until the event starts/);
+  f.sqlite.exec("UPDATE management_tokens SET expires_at = 0");
+  assert.equal((await f.call("/management/view", { body: { token } })).status, 200);
+  await f.call("/management/request", { body: { eventId, email: "unknown@example.com", turnstileToken: "valid" } });
+  assert.equal(f.sqlite.prepare("SELECT COUNT(*) AS n FROM management_tokens").get().n, 1);
+  f.sqlite.prepare("UPDATE events SET starts_at = ?").run(Date.now() - 1000);
+  assert.equal((await f.call("/management/cancel", { body: { token } })).status, 401);
+  f.sqlite.prepare("UPDATE events SET starts_at = ?").run(Date.now() + 86400000);
+  assert.equal((await f.call("/management/cancel", { body: { token } })).status, 200);
+});
