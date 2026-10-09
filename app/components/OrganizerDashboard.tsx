@@ -73,6 +73,14 @@ export function OrganizerDashboard() {
     finally { setPending(false); }
   }
 
+  async function deleteRegistration(row: Registration) {
+    if (!window.confirm(`Permanently delete ${row.name}’s registration for this event? Their name, email, consent record and RSVP links will be removed. This cannot be undone. Previously exported files and delivered emails are not deleted.`)) return;
+    setPending(true); setMessage("");
+    try { await request(`/admin/registrations/${row.id}`, { method: "DELETE" }); await refresh(); setMessage("Attendee record permanently deleted."); }
+    catch (issue) { setMessage(issue instanceof Error ? issue.message : "Unable to delete attendee record."); }
+    finally { setPending(false); }
+  }
+
   async function createEvent(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); const form = event.currentTarget;
     const values = Object.fromEntries(new FormData(form));
@@ -174,7 +182,7 @@ export function OrganizerDashboard() {
         {selected.rsvpProvider === "native" && <><div className="attendee-table-wrap"><table className="attendee-table">
           <caption>{selected.title} registrations</caption>
           <thead><tr><th>Name</th><th>Email</th><th>Status</th><th>Actions</th></tr></thead>
-          <tbody>{registrations.map((row) => <tr key={row.id}><td>{row.name}</td><td>{row.email}</td><td>{row.status}</td><td>{row.status === "confirmed" && <button type="button" className="text-link" disabled={pending} onClick={() => cancel(row.id)}>Cancel RSVP<span className="sr-only"> for {row.name}</span></button>}</td></tr>)}</tbody>
+          <tbody>{registrations.map((row) => <tr key={row.id}><td>{row.name}</td><td>{row.email}</td><td>{row.status}</td><td className="attendee-actions">{row.status === "confirmed" && <button type="button" className="text-link" disabled={pending} onClick={() => cancel(row.id)}>Cancel RSVP<span className="sr-only"> for {row.name}</span></button>}<button type="button" className="text-link" disabled={pending} onClick={() => deleteRegistration(row)}>Delete record<span className="sr-only"> for {row.name}</span></button></td></tr>)}</tbody>
         </table></div>
         {!registrations.length && <p>No registrations yet.</p>}</>}
       </>}

@@ -178,7 +178,9 @@ No past attendees are emailed automatically. Email changes and reminders are not
 ## Registration consent
 
 New native registrations require explicit agreement to Privacy Notice version
-2026-10-08. Apply migration 0004 with `npm.cmd run rsvp:migrate` before deploying.
+2026-10-08.2. Apply migration 0004 with `npm.cmd run rsvp:migrate` before deploying.
 The API records the timestamp and notice version. Existing records remain null;
 consent is not backfilled. Cancellation is not data erasure. No automatic attendee
 retention or deletion job is configured. The notice describes the current behavior.
+
+Organizers can permanently delete confirmed or cancelled attendee records from the dashboard. Apply migration 0005 before deploying: its trigger atomically removes associated management tokens. Deletion releases confirmed capacity and removes consent evidence; existing exports and delivered emails remain separate.

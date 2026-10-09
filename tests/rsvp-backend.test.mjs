@@ -9,6 +9,7 @@ const migration = await readFile(new URL("../backend/migrations/0001_rsvps.sql",
 const eventMigration = await readFile(new URL("../backend/migrations/0002_event_management.sql", import.meta.url), "utf8");
 const emailMigration = await readFile(new URL("../backend/migrations/0003_rsvp_email.sql", import.meta.url), "utf8");
 const consentMigration = await readFile(new URL("../backend/migrations/0004_registration_consent.sql", import.meta.url), "utf8");
+const deletionMigration = await readFile(new URL("../backend/migrations/0005_attendee_deletion.sql", import.meta.url), "utf8");
 const origin = "https://philadelphiaspaceforum.org";
 const eventId = "cislunar-space-situational-awareness-workshop";
 // Public fixture value, not a production secret.
@@ -16,7 +17,7 @@ const adminToken = "test-organizer-token-0000000000000000000000";
 
 function fixture(t, capacity = 2) {
   const sqlite = new DatabaseSync(":memory:");
-  sqlite.exec("PRAGMA foreign_keys = ON"); sqlite.exec(migration); sqlite.exec(eventMigration); sqlite.exec(emailMigration); sqlite.exec(consentMigration);
+  sqlite.exec("PRAGMA foreign_keys = ON"); sqlite.exec(migration); sqlite.exec(eventMigration); sqlite.exec(emailMigration); sqlite.exec(consentMigration); sqlite.exec(deletionMigration);
   sqlite.prepare("INSERT INTO events (id, title, capacity, registration_open) VALUES (?, ?, ?, 1)").run(eventId, "SSA workshop", capacity);
   const DB = { prepare(sql) {
     const statement = sqlite.prepare(sql);
@@ -40,7 +41,7 @@ function fixture(t, capacity = 2) {
     method, headers: { ...(requestOrigin ? { Origin: requestOrigin } : {}), ...(body ? { "Content-Type": "application/json" } : {}), ...(admin ? { Authorization: `Bearer ${adminToken}` } : {}) },
     ...(body ? { body: JSON.stringify(body) } : {}),
   }), env);
-  const register = (email, extra = {}) => call("/registrations", { body: { eventId, name: "Test attendee", email, turnstileToken: "valid", consent: true, privacyNoticeVersion: "2026-10-08", ...extra } });
+  const register = (email, extra = {}) => call("/registrations", { body: { eventId, name: "Test attendee", email, turnstileToken: "valid", consent: true, privacyNoticeVersion: "2026-10-08.2", ...extra } });
   return { sqlite, env, call, register };
 }
 
@@ -235,7 +236,7 @@ test("registration requires explicit consent to current notice and records evide
   assert.equal(f.sqlite.prepare("SELECT COUNT(*) AS n FROM registrations").get().n, 0);
   const before = Date.now(); assert.equal((await f.register("consent@example.com")).status, 201);
   const stored = f.sqlite.prepare("SELECT consent_at, privacy_notice_version FROM registrations").get();
-  assert.ok(stored.consent_at >= before); assert.equal(stored.privacy_notice_version, "2026-10-08");
+  assert.ok(stored.consent_at >= before); assert.equal(stored.privacy_notice_version, "2026-10-08.2");
 });
 
  test("dated management links follow the event date beyond the fallback expiration", async t => {
@@ -269,4 +270,20 @@ test("public attendance counts track registrations and cancellations without att
   assert.doesNotMatch(JSON.stringify(event), /count@example|Test attendee|cancellation_hash/);
   await f.call("/cancel", { body: { token: registration.cancellationToken } });
   assert.equal((await read()).confirmed, 0); assert.equal((await read()).available, 2);
+});
+
+test("only organizers can permanently delete attendees and deletion removes tokens and releases capacity", async t => {
+  const f = fixture(t, 1);
+  const registration = await (await f.register("delete@example.com")).json();
+  f.sqlite.prepare("INSERT INTO management_tokens VALUES (?, ?, ?)").run("fixture-hash", registration.id, Date.now() + 86400000);
+  const path = `/admin/registrations/${registration.id}`;
+  assert.equal((await f.call(path, { method: "DELETE" })).status, 401);
+  assert.equal(f.sqlite.prepare("SELECT COUNT(*) AS n FROM registrations").get().n, 1);
+  assert.equal((await f.call(path, { method: "DELETE", admin: true })).status, 200);
+  assert.equal(f.sqlite.prepare("SELECT COUNT(*) AS n FROM registrations").get().n, 0);
+  assert.equal(f.sqlite.prepare("SELECT COUNT(*) AS n FROM management_tokens").get().n, 0);
+  const availability = await (await f.call(`/events/${eventId}`)).json();
+  assert.equal(availability.confirmed, 0); assert.equal(availability.available, 1);
+  assert.equal((await f.call(path, { method: "DELETE", admin: true })).status, 404);
+  assert.equal((await f.register("delete@example.com")).status, 201);
 });

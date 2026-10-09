@@ -80,7 +80,7 @@ function RsvpFields({ eventId, open, onBusyChange }: { eventId: string; open: bo
     try {
       const result = await rsvpRequest("/registrations", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ eventId, name: data.get("name"), email: data.get("email"), turnstileToken: challenge, consent, privacyNoticeVersion: "2026-10-08" }),
+        body: JSON.stringify({ eventId, name: data.get("name"), email: data.get("email"), turnstileToken: challenge, consent, privacyNoticeVersion: "2026-10-08.2" }),
       });
       const url = new URL(publicAsset("/rsvp/cancel/"), window.location.origin);
       url.hash = result.cancellationToken;
