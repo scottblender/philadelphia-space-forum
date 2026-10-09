@@ -165,6 +165,9 @@ async function route(request, env, path) {
       const provider = data.rsvpProvider ?? "native";
       if (!["native", "external", "meetup"].includes(provider)) throw new HttpError(400, "Choose a registration option.");
       const rsvpUrl = provider === "native" ? undefined : externalUrl(text("rsvpUrl", 2000, true));
+      const eventType = data.eventType ?? "in-person";
+      if (!["in-person", "online"].includes(eventType)) throw new HttpError(400, "Choose In-Person or Online.");
+      const meetingUrl = eventType === "online" ? externalUrl(text("meetingUrl", 2000, true)) : undefined;
       const title = text("title", 200, true), synopsis = text("synopsis", 2000, true);
       const startsAt = data.startsAt || null, endsAt = data.endsAt || null;
       if ((startsAt && (typeof startsAt !== "string" || !Number.isFinite(Date.parse(startsAt)))) ||
@@ -174,7 +177,8 @@ async function route(request, env, path) {
       const id = existing?.id ?? "event-" + crypto.randomUUID();
       const details = { id, title, synopsis, startsAt, endsAt, timeZone: "America/New_York", status: "scheduled",
         category: "Workshop", host: text("host", 200) || "Philadelphia Space Forum",
-        location: { name: text("location", 300) || "To be announced", address: text("address", 300), city: text("city", 120), state: text("state", 80) },
+        eventType, ...(meetingUrl ? { meetingUrl } : {}),
+        location: eventType === "online" ? { name: "Online", address: "", city: "", state: "" } : { name: text("location", 300) || "To be announced", address: text("address", 300), city: text("city", 120), state: text("state", 80) },
         speaker: { name: text("speaker", 200), role: "Workshop leader", bio: text("speakerBio", 2000) },
         topics: text("topics", 2000).split("\n").map(t => t.trim()).filter(Boolean), rsvpProvider: provider, ...(rsvpUrl ? { rsvpUrl } : {}) };
       if (existing) {

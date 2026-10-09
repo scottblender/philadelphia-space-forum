@@ -162,3 +162,16 @@ test("oversized requests are rejected and CSV export neutralizes spreadsheet for
   assert.equal(listing.events[0].location.name, "New venue");
   assert.equal(f.sqlite.prepare("SELECT COUNT(*) AS n FROM registrations").get().n, 1);
 });
+
+ test("online events require a safe meeting link and discard physical address fields", async (t) => {
+  const f = fixture(t);
+  const body = { title: "Online workshop", synopsis: "Remote session", capacity: 20, eventType: "online", location: "Old venue", address: "Old address" };
+  assert.equal((await f.call("/admin/events", { admin: true, body })).status, 400);
+  assert.equal((await f.call("/admin/events", { admin: true, body: { ...body, meetingUrl: "javascript:alert(1)" } })).status, 400);
+  const created = await (await f.call("/admin/events", { admin: true, body: { ...body, meetingUrl: "https://example.com/meeting" } })).json();
+  let event = (await (await f.call("/events")).json()).events.find(e => e.id === created.id);
+  assert.equal(event.eventType, "online"); assert.equal(event.location.address, ""); assert.equal(event.meetingUrl, "https://example.com/meeting");
+  assert.equal((await f.call(`/admin/events/${created.id}`, { method: "PUT", admin: true, body: { ...body, eventType: "in-person", location: "Pennovation Center" } })).status, 200);
+  event = (await (await f.call("/events")).json()).events.find(e => e.id === created.id);
+  assert.equal(event.location.name, "Pennovation Center"); assert.equal(event.meetingUrl, undefined);
+});

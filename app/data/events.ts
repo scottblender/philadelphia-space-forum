@@ -7,6 +7,8 @@ export interface ForumEvent {
   endsAt: string | null;
   timeZone: string;
   host: string;
+  eventType?: "in-person" | "online";
+  meetingUrl?: string;
   location: { name: string; address: string; city: string; state: string };
   synopsis: string;
   speaker: { name: string; role: string; bio: string };

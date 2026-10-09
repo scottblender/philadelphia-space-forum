@@ -21,6 +21,7 @@ export function OrganizerDashboard() {
   const editingEvent = events.find(e => e.id === editingId);
   const draft: Partial<ForumEvent> = editingEvent?.details_json ? JSON.parse(editingEvent.details_json) : {};
   const localDate = (value?: string | null) => { if (!value) return ""; const date = new Date(value); return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16); };
+  const [eventType, setEventType] = useState("in-person");
   const [newProvider, setNewProvider] = useState("native");
   const [externalTitle, setExternalTitle] = useState("");
   const [externalLink, setExternalLink] = useState("");
@@ -119,7 +120,7 @@ export function OrganizerDashboard() {
 
   return (
     <div className="organizer-dashboard">
-      <button type="button" className="button button-blue" disabled={pending} onClick={() => { setEditingId(null); setNewProvider("native"); setAdding(!adding); }}>{adding ? "Close event form" : "Add event"}</button>
+      <button type="button" className="button button-blue" disabled={pending} onClick={() => { setEditingId(null); setNewProvider("native"); setEventType("in-person"); setAdding(!adding); }}>{adding ? "Close event form" : "Add event"}</button>
       {adding && <form key={editingId ?? "new"} className="organizer-settings event-create-form" onSubmit={createEvent}>
         <h2>{editingId ? "Edit event" : "Add an event"}</h2>
         <p>New events appear on the website. Website registration starts closed. Dates and times use your computer’s local time zone.</p>
@@ -131,10 +132,12 @@ export function OrganizerDashboard() {
           <label>Start (optional)<input name="startsAt" defaultValue={localDate(draft.startsAt)} type="datetime-local" /></label>
           <label>End (optional)<input name="endsAt" defaultValue={localDate(draft.endsAt)} type="datetime-local" /></label>
           <label>Host<input name="host" maxLength={200} defaultValue={draft.host ?? "Philadelphia Space Forum"} /></label>
-          <label>Venue<input name="location" defaultValue={draft.location?.name} maxLength={300} /></label>
-          <label>Street address<input name="address" defaultValue={draft.location?.address} maxLength={300} /></label>
-          <label>City<input name="city" defaultValue={draft.location?.city} maxLength={120} /></label>
-          <label>State<input name="state" defaultValue={draft.location?.state} maxLength={80} /></label>
+          <label>Type<select name="eventType" value={eventType} onChange={e => setEventType(e.target.value)}><option value="in-person">In-Person</option><option value="online">Online</option></select></label>
+          <label>Meeting link<input name="meetingUrl" type="url" placeholder="https://" defaultValue={draft.meetingUrl} disabled={eventType !== "online"} required={eventType === "online"} maxLength={2000} /></label>
+          <label>Venue<input name="location" disabled={eventType === "online"} defaultValue={draft.location?.name} maxLength={300} /></label>
+          <label>Street address<input name="address" disabled={eventType === "online"} defaultValue={draft.location?.address} maxLength={300} /></label>
+          <label>City<input name="city" disabled={eventType === "online"} defaultValue={draft.location?.city} maxLength={120} /></label>
+          <label>State<input name="state" disabled={eventType === "online"} defaultValue={draft.location?.state} maxLength={80} /></label>
           <label>Speaker<input name="speaker" defaultValue={draft.speaker?.name} maxLength={200} /></label>
           <label>Speaker bio<textarea name="speakerBio" defaultValue={draft.speaker?.bio} maxLength={2000} rows={3} /></label>
           <label>Topics (one per line)<textarea name="topics" defaultValue={draft.topics?.join("\n")} maxLength={2000} rows={3} /></label>
@@ -166,7 +169,7 @@ export function OrganizerDashboard() {
           </>}
           <button className="button button-blue" disabled={pending}>Save settings</button>
         </form>
-        <div className="organizer-event-actions"><button type="button" className="text-link" disabled={pending} onClick={() => { setEditingId(selectedId); setNewProvider(selected.rsvpProvider); setAdding(true); }}>Edit event</button><button type="button" className="text-link event-delete" onClick={deleteEvent} disabled={pending}>Delete event</button>
+        <div className="organizer-event-actions"><button type="button" className="text-link" disabled={pending} onClick={() => { setEditingId(selectedId); setNewProvider(selected.rsvpProvider); const details = selected.details_json ? JSON.parse(selected.details_json) : {}; setEventType(details.eventType ?? (details.location?.name?.toLowerCase() === "online" ? "online" : "in-person")); setAdding(true); }}>Edit event</button><button type="button" className="text-link event-delete" onClick={deleteEvent} disabled={pending}>Delete event</button>
         <button type="button" className="text-link" onClick={exportCsv} disabled={selected.rsvpProvider !== "native" || !registrations.length || pending}>Download attendee CSV</button></div>
         {selected.rsvpProvider === "native" && <><div className="attendee-table-wrap"><table className="attendee-table">
           <caption>{selected.title} registrations</caption>

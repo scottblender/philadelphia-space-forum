@@ -71,7 +71,8 @@ export function EventCard({ event }: { event: ForumEvent }) {
         </div>
         <div>
           <p className="eyebrow"><span /> Where</p>
-          <p className="event-venue">{event.location.name}</p>
+          <p className="event-venue">{event.eventType === "online" ? "Online" : event.location.name}</p>
+          {event.eventType === "online" && event.meetingUrl && <a className="text-link" href={event.meetingUrl} target="_blank" rel="noreferrer">Join online meeting <span aria-hidden="true">↗</span></a>}
           {event.location.address && <><address>{event.location.address}<br />{event.location.city}, {event.location.state}</address>
           <a className="text-link" href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${event.location.name}, ${address}`)}`} target="_blank" rel="noreferrer">Get directions <span aria-hidden="true">↗</span></a></>}
         </div>
