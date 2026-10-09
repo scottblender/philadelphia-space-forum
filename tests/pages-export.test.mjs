@@ -8,13 +8,18 @@ const basePath = (process.env.PAGES_BASE_PATH ?? repositoryBasePath).replace(/\/
 const output = new URL("../out/", import.meta.url);
 
 test("Pages exports new and legacy routes with valid prefixed assets and links", async () => {
-  for (const route of ["", "events/", "about/", "calendar/"]) {
+  for (const route of ["", "events/", "about/", "calendar/", "organizer/", "rsvp/cancel/"]) {
     const html = await readFile(new URL(`${route}index.html`, output), "utf8");
     assert.ok(html.includes(`href="${basePath}/events/"`));
     assert.ok(html.includes(`href="${basePath}/about/"`));
     assert.ok(html.includes(`${basePath}/starfield.svg`));
     assert.doesNotMatch(html, /substack|codex-preview|Syne/i);
-    if (route === "events/" || route === "calendar/") assert.match(html, /Cislunar Space Workshop/);
+    if (route === "events/" || route === "calendar/") {
+      assert.match(html, /Cislunar Space Fundamentals Workshop/);
+      assert.match(html, /Cislunar Space Situational Awareness Workshop/);
+      assert.match(html, /meetup\.com\/code-coffee-philly\/events\/316162308\//);
+      assert.match(html, /aria-haspopup="dialog"/);
+    }
     if (route === "about/") {
       assert.ok(html.includes(`src="${basePath}/team/scott-blender-suit.png"`));
       assert.ok(html.includes(`src="${basePath}/team/gianna-voges.jpg"`));

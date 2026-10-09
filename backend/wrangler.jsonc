@@ -1,0 +1,17 @@
+{
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  "name": "philadelphia-space-forum-rsvp",
+  "main": "worker.mjs",
+  "compatibility_date": "2026-10-08",
+  "workers_dev": true,
+  "vars": {
+    "ALLOWED_ORIGINS": "https://philadelphiaspaceforum.org,https://www.philadelphiaspaceforum.org,https://scottblender.github.io",
+    "TURNSTILE_SITE_KEY": ""
+  },
+  "d1_databases": [{
+    "binding": "DB",
+    "database_name": "philadelphia-space-forum-rsvp",
+    "database_id": "00000000-0000-0000-0000-000000000000",
+    "migrations_dir": "migrations"
+  }]
+}

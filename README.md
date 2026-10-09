@@ -48,6 +48,16 @@ To verify the custom-domain build locally:
 GITHUB_REPOSITORY=scottblender/philadelphia-space-forum PAGES_BASE_PATH='' npm run test:pages
 ```
 
+## Native RSVP backend
+
+The first workshop keeps Meetup. The Situational Awareness test workshop opens
+a native RSVP modal. Its form remains a preview until the Cloudflare Worker and
+D1 database are activated and the event is opened in `/organizer/`.
+
+See [backend/README.md](backend/README.md) for the one-time setup, organizer
+access, cancellation links, and database tests. No credentials belong in this
+repository. `RSVP_API_URL` is the only GitHub Pages build variable required.
+
 ## Content and components
 
 - Add events in `app/data/events.ts`. Each `EventCard` shows its location,

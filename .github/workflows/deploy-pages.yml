@@ -34,9 +34,13 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Test registration backend
+        run: npm run test:rsvp
+
       - name: Build static site
         env:
           PAGES_BASE_PATH: ${{ steps.pages.outputs.base_path }}
+          NEXT_PUBLIC_RSVP_API_URL: ${{ vars.RSVP_API_URL }}
         run: npm run test:pages
 
       - name: Upload Pages artifact

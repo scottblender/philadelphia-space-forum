@@ -29,7 +29,7 @@ test("home uses Instagram and the new navigation", async () => {
 
 test("events render the flyer details and accessible disclosure", async () => {
   const html = await render("/events");
-  for (const text of ["Cislunar Space Workshop", "Pennovation Center", "3401 Grays Ferry Ave", "Scott Blender", "C.O.D.E", "2:00 PM", "4:00 PM EDT", "NASA", "Advanced Space Concepts Laboratory"]) {
+  for (const text of ["Cislunar Space Fundamentals Workshop", "Cislunar Space Situational Awareness Workshop", "Pennovation Center", "3401 Grays Ferry Ave", "Scott Blender", "C.O.D.E", "2:00 PM", "4:00 PM EDT", "NASA", "Advanced Space Concepts Laboratory", "optical observation systems", "future missions being planned"]) {
     assert.ok(html.includes(text), `Missing event information: ${text}`);
   }
   assert.match(html, /2026-10-16T14:00:00-04:00/);
@@ -37,6 +37,8 @@ test("events render the flyer details and accessible disclosure", async () => {
   assert.match(html, /aria-expanded="false"/);
   assert.match(html, /id="cislunar-space-workshop-2026-10-16-details"[^>]*hidden/);
   assert.match(html, /aria-live="polite"/);
+  assert.match(html, /aria-haspopup="dialog"/);
+  assert.match(html, /<dialog[^>]*id="cislunar-space-situational-awareness-workshop-rsvp-dialog"/);
 });
 
 test("about page renders both cofounders and their supplied photos", async () => {
@@ -55,6 +57,6 @@ test("about page renders both cofounders and their supplied photos", async () =>
 
 test("previous calendar URLs still render events", async () => {
   const html = await render("/calendar");
-  assert.match(html, /Cislunar Space Workshop/);
+  assert.match(html, /Cislunar Space Fundamentals Workshop/);
   assert.doesNotMatch(html, /Coming.*soon/i);
 });

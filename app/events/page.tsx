@@ -6,7 +6,7 @@ import { events } from "../data/events";
 
 export const metadata: Metadata = {
   title: "Events | Philadelphia Space Forum",
-  description: "Explore Philadelphia Space Forum events, including the Cislunar Space Workshop at Pennovation Center on October 16, 2026.",
+  description: "Explore Philadelphia Space Forum events, including the Cislunar Space Fundamentals Workshop and Cislunar Space Situational Awareness Workshop.",
 };
 
 export default function EventsPage() {

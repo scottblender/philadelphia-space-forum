@@ -20,3 +20,7 @@ test("cancellation takes precedence before, during, and after an event", () => {
     assert.equal(getEventState({ ...event, status: "cancelled" }, Date.parse(time)), "cancelled");
   }
 });
+
+test("events awaiting a date remain upcoming without inventing timestamps", () => {
+  assert.equal(getEventState({ startsAt: null, endsAt: null, status: "scheduled" }, Date.now()), "upcoming");
+});

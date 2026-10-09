@@ -3,22 +3,24 @@ export interface ForumEvent {
   title: string;
   category: string;
   status: "scheduled" | "cancelled";
-  startsAt: string;
-  endsAt: string;
+  startsAt: string | null;
+  endsAt: string | null;
   timeZone: string;
   host: string;
   location: { name: string; address: string; city: string; state: string };
   synopsis: string;
   speaker: { name: string; role: string; bio: string };
   topics: string[];
-  rsvpUrl: string;
+  rsvpUrl?: string;
+  rsvpProvider: "meetup" | "native";
+  isTest?: boolean;
 }
 
 /** Add future events here; EventCard handles their details and lifecycle. */
 export const events: ForumEvent[] = [
   {
     id: "cislunar-space-workshop-2026-10-16",
-    title: "Cislunar Space Workshop",
+    title: "Cislunar Space Fundamentals Workshop",
     category: "Workshop · In person",
     status: "scheduled",
     startsAt: "2026-10-16T14:00:00-04:00",
@@ -46,5 +48,33 @@ export const events: ForumEvent[] = [
       "Q&A and ways to get involved",
     ],
     rsvpUrl: "https://www.meetup.com/code-coffee-philly/events/316162308/",
+    rsvpProvider: "meetup",
+  },
+  {
+    id: "cislunar-space-situational-awareness-workshop",
+    title: "Cislunar Space Situational Awareness Workshop",
+    category: "Workshop · Test event",
+    isTest: true,
+    status: "scheduled",
+    startsAt: null,
+    endsAt: null,
+    timeZone: "America/New_York",
+    host: "Philadelphia Space Forum",
+    location: { name: "To be announced", address: "", city: "", state: "" },
+    synopsis: "Dive further into Scott’s Ph.D. research and the foundations of space situational awareness in the cislunar environment. Explore optical observation systems, the current state of the art, and future missions being planned.",
+    speaker: {
+      name: "Scott Blender",
+      role: "Workshop leader",
+      bio: "Scott is a third-year Ph.D. student at RPI and a researcher in the Advanced Space Concepts Laboratory. His research focuses on cislunar space domain awareness and lunar-surface sensor networks.",
+    },
+    topics: [
+      "Foundations of cislunar space situational awareness",
+      "Scott’s Ph.D. research and lunar-surface sensor networks",
+      "Optical systems for observing and tracking spacecraft",
+      "Current state of the art in cislunar monitoring",
+      "Future missions being planned",
+      "Discussion and Q&A",
+    ],
+    rsvpProvider: "native",
   },
 ];
