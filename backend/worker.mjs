@@ -95,19 +95,19 @@ async function sendManagementEmail(env, registration, event, confirmation = fals
   if (!env.RESEND_API_KEY) return false;
   const token = crypto.randomUUID() + crypto.randomUUID();
   const tokenHash = await hash(token);
-  const expires = Date.now() + 86400000;
+  const expires = Date.now() + 30 * 86400000;
   await env.DB.prepare("INSERT INTO management_tokens (token_hash, registration_id, expires_at) VALUES (?, ?, ?)").bind(tokenHash, registration.id, expires).run();
   const url = `${siteOrigin}/rsvp/manage/#${token}`;
   const details = event.details_json ? JSON.parse(event.details_json) : {};
   const when = event.starts_at ? new Intl.DateTimeFormat("en-US", { dateStyle: "full", timeStyle: "short", timeZone: "America/New_York" }).format(new Date(event.starts_at)) + " (Eastern time)" : "Date to be announced";
   const where = details.eventType === "online" ? "Online" : details.location?.name || "Location to be announced";
   const heading = confirmation ? "Your RSVP is confirmed" : "Manage your RSVP";
-  const text = `${heading}\n\n${event.title}\n${when}\n${where}\n\nView or cancel your RSVP: ${url}\n\nThis link expires in 24 hours. Request another at ${siteOrigin}/rsvp/manage/. If you did not request this email, you can ignore it.`;
+  const text = `${heading}\n\n${event.title}\n${when}\n${where}\n\nView or cancel your RSVP: ${url}\n\nThis link expires in 30 days. Request another at ${siteOrigin}/rsvp/manage/. If you did not request this email, you can ignore it.`;
   try {
     const sent = await fetch("https://api.resend.com/emails", { method: "POST", signal: AbortSignal.timeout(10000),
       headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, "Content-Type": "application/json", "Idempotency-Key": `rsvp-${tokenHash}` },
       body: JSON.stringify({ from: emailFrom, to: [registration.email], subject: `${heading}: ${event.title}`, text,
-        html: `<h1>${escapeHtml(heading)}</h1><p>${escapeHtml(event.title)}</p><p>${escapeHtml(when)}<br>${escapeHtml(where)}</p><p><a href="${url}">Manage RSVP</a></p><p>This link expires in 24 hours. <a href="${siteOrigin}/rsvp/manage/">Request a new link</a>.</p><p>If you did not request this email, you can ignore it.</p>` }) });
+        html: `<h1>${escapeHtml(heading)}</h1><p>${escapeHtml(event.title)}</p><p>${escapeHtml(when)}<br>${escapeHtml(where)}</p><p><a href="${url}">Manage RSVP</a></p><p>This link expires in 30 days. <a href="${siteOrigin}/rsvp/manage/">Request a new link</a>.</p><p>If you did not request this email, you can ignore it.</p>` }) });
     if (sent.ok) return true;
   } catch {}
   await env.DB.prepare("DELETE FROM management_tokens WHERE token_hash = ?").bind(tokenHash).run();
