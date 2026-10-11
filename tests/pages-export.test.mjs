@@ -21,11 +21,11 @@ test("Pages exports new and legacy routes with valid prefixed assets and links",
       assert.match(html, /aria-haspopup="dialog"/);
     }
     if (route === "about/") {
-      assert.ok(html.includes(`src="${basePath}/team/scott-blender-suit.png"`));
+      assert.ok(html.includes(`src="${basePath}/team/scott-blender-outdoors.jpg"`));
       assert.ok(html.includes(`src="${basePath}/team/gianna-voges.jpg"`));
     }
   }
-  for (const path of ["starfield.svg", "team/scott-blender-suit.png", "team/gianna-voges.jpg"]) {
+  for (const path of ["starfield.svg", "team/scott-blender-outdoors.jpg", "team/gianna-voges.jpg"]) {
     assert.ok((await stat(new URL(path, output))).size > 0);
   }
 });
