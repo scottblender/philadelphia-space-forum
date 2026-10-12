@@ -47,7 +47,7 @@ button { cursor: pointer; }
 .brand b { font-size: 12px; font-weight: 800; }
 .brand-mark { width: 31px; height: 31px; flex-shrink: 0; display: grid; place-items: center; border: 1px solid currentColor; border-radius: 50%; position: relative; }
 .brand-mark::after { content: ""; position: absolute; left: -5px; right: -5px; height: 9px; border: 1px solid currentColor; border-radius: 50%; transform: rotate(-20deg); }
-.brand-mark i { width: 4px; height: 4px; background: var(--cyan-blue); border-radius: 50%; }
+.brand-mark i { position: absolute; left: calc(50% + 12px); top: calc(50% - 8px); transform: translate(-50%, -50%); z-index: 1; width: 4px; height: 4px; background: var(--cyan-blue); border-radius: 50%; }
 .site-header nav { display: flex; align-items: center; gap: 38px; font-size: 13px; }
 .site-header nav a { display: inline-flex; align-items: center; min-height: 44px; color: var(--silver-gray); padding: 8px 4px; transition: color .2s; }
 .site-header nav a:hover, .site-header nav a[aria-current="page"] { color: var(--cyan-blue); }
