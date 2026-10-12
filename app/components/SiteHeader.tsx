@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { BrandMark } from "./BrandMark";
 import { usePathname } from "next/navigation";
 
 export function SiteHeader({ theme = "light" }: { theme?: "light" | "dark" }) {
@@ -9,7 +10,7 @@ export function SiteHeader({ theme = "light" }: { theme?: "light" | "dark" }) {
     <header className={`site-header site-header-${theme}`}>
       <div className="page-width nav-inner">
         <Link className="brand" href="/" aria-label="Philadelphia Space Forum home">
-          <span className="brand-mark"><i /></span>
+          <BrandMark />
           <span>PHILADELPHIA<br /><b>SPACE FORUM</b></span>
         </Link>
         <nav aria-label="Main navigation">

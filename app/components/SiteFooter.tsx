@@ -1,11 +1,12 @@
 import Link from "next/link";
+import { BrandMark } from "./BrandMark";
 
 export function SiteFooter() {
   return (
     <footer className="site-footer" id="footer">
       <div className="page-width footer-grid">
         <Link className="brand brand-footer" href="/">
-          <span className="brand-mark"><i /></span>
+          <BrandMark />
           <span>PHILADELPHIA<br /><b>SPACE FORUM</b></span>
         </Link>
         <p>Building a bigger space community,<br />right here in Philadelphia.</p>
