@@ -42,7 +42,7 @@ export default function Home() {
                 Come for a research talk. Stay for a debate about lunar governance. Meet the
                 person who helps your next idea leave the ground.
               </p>
-              <Link className="text-link" href="/about">Meet the cofounders <span>→</span></Link>
+              <Link className="text-link" href="/about">Meet the team <span>→</span></Link>
             </div>
           </div>
         </div>
