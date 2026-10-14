@@ -20,7 +20,7 @@ export const team: TeamMemberData[] = [
   {
     id: "gianna-voges",
     name: "Gianna Voges",
-    role: "Cofounder",
+    role: "Head of Content Creation",
     photo: "/team/gianna-voges.jpg",
     bio: "A Philly transplant, Gianna graduated from Temple University with a degree in journalism. She works in the restaurant industry and as a reporter for Philadelphia magazine.",
   },
