@@ -20,8 +20,9 @@ test("Pages exports new and legacy routes with valid prefixed assets and links",
       assert.match(html, /meetup\.com\/code-coffee-philly\/events\/316162308\//);
       assert.match(html, /aria-haspopup="dialog"/);
       assert.match(html, /Workshop materials/);
-      assert.ok(html.includes(`href="${basePath}/workshops/cislunar-space-fundamentals/LRO_Demo_Participant.ipynb"`));
-      assert.ok(html.includes(`href="${basePath}/workshops/cislunar-space-fundamentals/requirements.txt"`));
+      assert.match(html, /Download participant notebook/);
+      assert.match(html, /Download requirements.txt/);
+      assert.match(html, /October 17, 2026/);
     }
     if (route === "about/") {
       assert.ok(html.includes(`src="${basePath}/team/scott-blender-outdoors.jpg"`));
