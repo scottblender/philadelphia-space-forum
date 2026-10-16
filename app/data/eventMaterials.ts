@@ -10,6 +10,7 @@ export interface EventMaterialsData {
 // don't remove workshop downloads. Add a public slides URL when available.
 export const eventMaterials: Record<string, EventMaterialsData> = {
   "cislunar-space-workshop-2026-10-16": {
+    slidesUrl: "https://drive.google.com/file/d/1UMrhYlyN1UnGZE2dHED2ZqkvsVQlLQVY/view?usp=drivesdk",
     answers: [
       { parameter: "MU_MOON", value: "4902.800118", explanation: "Lunar GM in km³/s²; sets the strength of gravity." },
       { parameter: "altitude_km", value: "50.0", explanation: "Semi-major-axis altitude in km: a = lunar radius + altitude." },
