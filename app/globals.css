@@ -305,3 +305,11 @@ input:focus-visible, select:focus-visible, summary:focus-visible { outline: 2px 
 .event-materials-links { display: flex; flex-wrap: wrap; gap: 8px 24px; margin: 12px 0; }
 .event-materials-links .text-link { min-height: 44px; margin: 0; overflow-wrap: anywhere; }
 .event-materials .event-materials-note { font-size: 13px; color: var(--silver-gray); }
+
+.notebook-answers { margin: 20px 0; padding: 16px; border: 1px solid var(--line); }
+.notebook-answers summary { cursor: pointer; min-height: 28px; font-weight: 600; color: var(--cyan-blue); }
+.notebook-answers summary:focus-visible { outline: 2px solid var(--cyan-blue); outline-offset: 4px; }
+.notebook-answers[open] summary { margin-bottom: 12px; }
+.notebook-answers dl { display: grid; gap: 16px; margin-bottom: 0; }
+.notebook-answers dt { overflow-wrap: anywhere; }
+.notebook-answers dd { margin: 6px 0 0; font-size: 14px; line-height: 1.6; color: var(--silver-gray); }

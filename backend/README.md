@@ -184,3 +184,5 @@ consent is not backfilled. Cancellation is not data erasure. No automatic attend
 retention or deletion job is configured. The notice describes the current behavior.
 
 Organizers can permanently delete confirmed or cancelled attendee records from the dashboard. Apply migration 0005 before deploying: its foreign-key cascade atomically removes associated management tokens. Deletion releases confirmed capacity and removes consent evidence; existing exports and delivered emails remain separate.
+
+Event visibility: apply migration 0006 before deploying. Organizers can Hide event / Show event without deleting event details, attendee records, or registration settings. Hidden events are excluded from public listings; visibility is not an access restriction on direct API endpoints or hosted files.

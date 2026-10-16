@@ -128,9 +128,10 @@ async function route(request, env, path) {
   if (!env.DB) throw new HttpError(503, "Registration is temporarily unavailable.");
 
   if (path === "/events" && method === "GET") {
-    const result = await env.DB.prepare("SELECT id, details_json, deleted FROM events").all();
-    return response({ events: result.results.filter(e => !e.deleted && e.details_json).map(e => JSON.parse(e.details_json)),
-      deletedIds: result.results.filter(e => e.deleted).map(e => e.id) });
+    const result = await env.DB.prepare("SELECT id, details_json, deleted, hidden FROM events").all();
+    return response({ events: result.results.filter(e => !e.deleted && !e.hidden && e.details_json).map(e => JSON.parse(e.details_json)),
+      // Suppressed IDs also remove built-in fallback cards in older frontends.
+      deletedIds: result.results.filter(e => e.deleted || e.hidden).map(e => e.id) });
   }
 
   const eventMatch = path.match(/^\/events\/([^/]+)$/);
@@ -278,6 +279,11 @@ async function route(request, env, path) {
     if (adminEvent && method === "PATCH") {
       const event = await getEvent(env.DB, adminEvent[1]);
       const data = await readJson(request);
+      if (Object.hasOwn(data, "hidden")) {
+        if (typeof data.hidden !== "boolean" || Object.keys(data).length !== 1) throw new HttpError(400, "Send only a boolean hidden setting.");
+        await env.DB.prepare("UPDATE events SET hidden = ? WHERE id = ? AND deleted = 0").bind(Number(data.hidden), event.id).run();
+        return response({ saved: true, hidden: data.hidden });
+      }
       if (registrationProvider(event) !== "native") {
         const title = typeof data.title === "string" ? data.title.trim() : "";
         if (!title || title.length > 200 || /[\x00-\x1f]/.test(title)) throw new HttpError(400, "Enter a valid title.");

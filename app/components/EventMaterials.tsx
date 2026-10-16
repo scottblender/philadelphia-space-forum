@@ -27,6 +27,13 @@ export function EventMaterials({ materials, eventId }: { materials: EventMateria
       {!expired && materials.requirementsPath && <a className="text-link" href={active ? publicAsset(materials.requirementsPath) : undefined} aria-disabled={!active} download>Download requirements.txt <span aria-hidden="true">↓</span></a>}
       {materials.slidesUrl && <a className="text-link" href={materials.slidesUrl} target="_blank" rel="noreferrer">View workshop slides <span aria-hidden="true">↗</span></a>}
     </div>
+    {!expired && materials.answers?.length && <details className="notebook-answers">
+      <summary>Show notebook answers</summary>
+      <p>One worked example for the five missing inputs. Try filling them in yourself first.</p>
+      <dl>{materials.answers.map(answer => <div key={answer.parameter}>
+        <dt><code>{answer.parameter} = {answer.value}</code></dt><dd>{answer.explanation}</dd>
+      </div>)}</dl>
+    </details>}
     {!expired && materials.notebookPath && <p className="event-materials-note">Open the notebook in Jupyter or upload it to Google Colab. For a local setup, use Python 3.11+ and install the packages in requirements.txt.</p>}
   </section>;
 }

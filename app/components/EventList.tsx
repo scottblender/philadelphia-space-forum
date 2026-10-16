@@ -6,6 +6,7 @@ import { EventCard } from "./EventCard";
 
 export function EventList() {
   const [events, setEvents] = useState<ForumEvent[]>(builtInEvents);
+  const [loaded, setLoaded] = useState(!rsvpApiUrl);
   const [error, setError] = useState(false);
   useEffect(() => {
     if (!rsvpApiUrl) return;
@@ -14,12 +15,12 @@ export function EventList() {
       const merged = new Map(builtInEvents.map(event => [event.id, event]));
       for (const event of data.events) merged.set(event.id, event);
       for (const id of data.deletedIds) merged.delete(id);
-      setEvents([...merged.values()]); setError(false);
+      setEvents([...merged.values()]); setLoaded(true); setError(false);
     }).catch(() => { if (!controller.signal.aborted) setError(true); });
     refresh();
     const timer = window.setInterval(refresh, 60000);
     window.addEventListener("focus", refresh);
     return () => { controller.abort(); window.clearInterval(timer); window.removeEventListener("focus", refresh); };
   }, []);
-  return <>{error && <p role="status">Event updates could not load. Please refresh to try again.</p>}{events.map(event => <EventCard key={event.id} event={event} />)}{!events.length && <p>No events are available yet.</p>}</>;
+  return <>{error && <p role="status">Event updates could not load. Please refresh to try again.</p>}{!loaded && !error && <p role="status">Loading events…</p>}<div hidden={!loaded}>{events.map(event => <EventCard key={event.id} event={event} />)}{!events.length && <p>No events are available yet.</p>}</div></>;
 }

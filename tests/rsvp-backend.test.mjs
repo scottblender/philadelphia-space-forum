@@ -10,6 +10,7 @@ const eventMigration = await readFile(new URL("../backend/migrations/0002_event_
 const emailMigration = await readFile(new URL("../backend/migrations/0003_rsvp_email.sql", import.meta.url), "utf8");
 const consentMigration = await readFile(new URL("../backend/migrations/0004_registration_consent.sql", import.meta.url), "utf8");
 const deletionMigration = await readFile(new URL("../backend/migrations/0005_attendee_deletion.sql", import.meta.url), "utf8");
+const visibilityMigration = await readFile(new URL("../backend/migrations/0006_event_visibility.sql", import.meta.url), "utf8");
 const origin = "https://philadelphiaspaceforum.org";
 const eventId = "cislunar-space-situational-awareness-workshop";
 // Public fixture value, not a production secret.
@@ -17,7 +18,7 @@ const adminToken = "test-organizer-token-0000000000000000000000";
 
 function fixture(t, capacity = 2) {
   const sqlite = new DatabaseSync(":memory:");
-  sqlite.exec("PRAGMA foreign_keys = ON"); sqlite.exec(migration); sqlite.exec(eventMigration); sqlite.exec(emailMigration); sqlite.exec(consentMigration); sqlite.exec(deletionMigration);
+  sqlite.exec("PRAGMA foreign_keys = ON"); sqlite.exec(migration); sqlite.exec(eventMigration); sqlite.exec(emailMigration); sqlite.exec(consentMigration); sqlite.exec(deletionMigration); sqlite.exec(visibilityMigration);
   sqlite.prepare("INSERT INTO events (id, title, capacity, registration_open) VALUES (?, ?, ?, 1)").run(eventId, "SSA workshop", capacity);
   const DB = { prepare(sql) {
     const statement = sqlite.prepare(sql);
@@ -286,4 +287,25 @@ test("only organizers can permanently delete attendees and deletion removes toke
   assert.equal(availability.confirmed, 0); assert.equal(availability.available, 1);
   assert.equal((await f.call(path, { method: "DELETE", admin: true })).status, 404);
   assert.equal((await f.register("delete@example.com")).status, 201);
+});
+
+test("organizers hide and restore events without deleting details or attendee records", async t => {
+  const f = fixture(t);
+  const details = JSON.stringify({ id: eventId, title: "SSA workshop", rsvpProvider: "native" });
+  f.sqlite.prepare("UPDATE events SET details_json = ?").run(details);
+  await f.register("retained@example.com");
+  const path = `/admin/events/${eventId}`;
+  assert.equal((await f.call(path, { method: "PATCH", body: { hidden: true } })).status, 401);
+  assert.equal((await f.call(path, { admin: true, method: "PATCH", body: { hidden: "true" } })).status, 400);
+  assert.equal((await f.call(path, { admin: true, method: "PATCH", body: { hidden: true } })).status, 200);
+  const listing = await (await f.call("/events")).json();
+  assert.equal(listing.events.length, 0); assert.ok(listing.deletedIds.includes(eventId));
+  const admin = await (await f.call("/admin/events", { admin: true })).json();
+  assert.equal(admin.events[0].hidden, 1); assert.equal(admin.events[0].confirmed, 1);
+  const stored = f.sqlite.prepare("SELECT deleted, registration_open, details_json FROM events").get();
+  assert.equal(stored.deleted, 0); assert.equal(stored.registration_open, 1); assert.equal(stored.details_json, details);
+  assert.equal((await f.call(`/admin/registrations?eventId=${eventId}`, { admin: true })).status, 200);
+  assert.equal((await f.call(path, { admin: true, method: "PATCH", body: { hidden: false } })).status, 200);
+  const restored = await (await f.call("/events")).json();
+  assert.equal(restored.events.length, 1); assert.ok(!restored.deletedIds.includes(eventId));
 });

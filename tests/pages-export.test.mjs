@@ -23,6 +23,8 @@ test("Pages exports new and legacy routes with valid prefixed assets and links",
       assert.match(html, /Download participant notebook/);
       assert.match(html, /Download requirements.txt/);
       assert.match(html, /October 17, 2026/);
+      assert.match(html, /<details class="notebook-answers"><summary>Show notebook answers<\/summary>/);
+      assert.match(html, /MU_MOON/);
     }
     if (route === "about/") {
       assert.ok(html.includes(`src="${basePath}/team/scott-blender-outdoors.jpg"`));

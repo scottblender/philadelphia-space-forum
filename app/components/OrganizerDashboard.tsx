@@ -4,7 +4,7 @@ import { useState, type FormEvent } from "react";
 import type { ForumEvent } from "../data/events";
 import { csvCell, rsvpApiUrl, rsvpRequest } from "../lib/rsvp";
 
-type OrganizerEvent = { id: string; title: string; starts_at: number | null; capacity: number; confirmed: number; registration_open: number; rsvpProvider: "native" | "meetup" | "external"; rsvpUrl?: string; details_json?: string };
+type OrganizerEvent = { id: string; title: string; starts_at: number | null; capacity: number; confirmed: number; registration_open: number; hidden?: number; rsvpProvider: "native" | "meetup" | "external"; rsvpUrl?: string; details_json?: string };
 type Registration = { id: string; name: string; email: string; status: string; created_at: number };
 
 export function OrganizerDashboard() {
@@ -78,6 +78,17 @@ export function OrganizerDashboard() {
     setPending(true); setMessage("");
     try { await request(`/admin/registrations/${row.id}`, { method: "DELETE" }); await refresh(); setMessage("Attendee record permanently deleted."); }
     catch (issue) { setMessage(issue instanceof Error ? issue.message : "Unable to delete attendee record."); }
+    finally { setPending(false); }
+  }
+
+  async function toggleVisibility() {
+    if (!selected || pending) return;
+    const hidden = !selected.hidden;
+    setPending(true); setMessage("");
+    try {
+      await request(`/admin/events/${encodeURIComponent(selectedId)}`, { method: "PATCH", body: JSON.stringify({ hidden }) });
+      await refresh(); setMessage(hidden ? "Event hidden from public listings." : "Event shown on public listings.");
+    } catch (issue) { setMessage(issue instanceof Error ? issue.message : "Unable to change visibility."); }
     finally { setPending(false); }
   }
 
@@ -157,10 +168,11 @@ export function OrganizerDashboard() {
         <div className="organizer-event-picker"><label htmlFor="organizer-event">Event</label>
         <select id="organizer-event" value={selectedId} disabled={pending} onChange={async (event) => {
           setPending(true); try { await select(event.target.value); } catch { setMessage("Unable to load attendees."); } finally { setPending(false); }
-        }}>{events.map((event) => <option key={event.id} value={event.id}>{event.title}</option>)}</select></div>
+        }}>{events.map((event) => <option key={event.id} value={event.id}>{event.title}{event.hidden ? " (Hidden)" : ""}</option>)}</select></div>
         <button type="button" className="text-link" disabled={pending} onClick={() => { setSignedIn(false); setAccessKey(""); setRegistrations([]); setEvents([]); setSelectedId(""); setMessage(""); }}>Sign out</button>
       </div>
       {selected && <>
+        <p><strong>Visibility: {selected.hidden ? "Hidden" : "Public"}</strong>. Hiding removes the event from public listings while keeping its details and attendee records. Registration settings stay as configured.</p>
         <form className="organizer-settings" onSubmit={save}>
           {selected.rsvpProvider !== "native" ? <>
             <h2>External registration</h2>
@@ -177,7 +189,7 @@ export function OrganizerDashboard() {
           </>}
           <button className="button button-blue" disabled={pending}>Save settings</button>
         </form>
-        <div className="organizer-event-actions"><button type="button" className="text-link" disabled={pending} onClick={() => { setEditingId(selectedId); setNewProvider(selected.rsvpProvider); const details = selected.details_json ? JSON.parse(selected.details_json) : {}; setEventType(details.eventType ?? (details.location?.name?.toLowerCase() === "online" ? "online" : "in-person")); setAdding(true); }}>Edit event</button><button type="button" className="text-link event-delete" onClick={deleteEvent} disabled={pending}>Delete event</button>
+        <div className="organizer-event-actions"><button type="button" className="text-link" disabled={pending} onClick={toggleVisibility}>{selected.hidden ? "Show event" : "Hide event"}</button><button type="button" className="text-link" disabled={pending} onClick={() => { setEditingId(selectedId); setNewProvider(selected.rsvpProvider); const details = selected.details_json ? JSON.parse(selected.details_json) : {}; setEventType(details.eventType ?? (details.location?.name?.toLowerCase() === "online" ? "online" : "in-person")); setAdding(true); }}>Edit event</button><button type="button" className="text-link event-delete" onClick={deleteEvent} disabled={pending}>Delete event</button>
         <button type="button" className="text-link" onClick={exportCsv} disabled={selected.rsvpProvider !== "native" || !registrations.length || pending}>Download attendee CSV</button></div>
         {selected.rsvpProvider === "native" && <><div className="attendee-table-wrap"><table className="attendee-table">
           <caption>{selected.title} registrations</caption>
