@@ -298,3 +298,10 @@ input:focus-visible, select:focus-visible, summary:focus-visible { outline: 2px 
 .privacy-content a { color: var(--cyan-blue); text-decoration: underline; }
 
 .attendee-actions .text-link { display: block; margin: 8px 0; }
+
+.event-materials { margin-top: 28px; padding-top: 24px; border-top: 1px solid var(--line); }
+.event-materials h3 { margin: 0 0 12px; font-size: 20px; }
+.event-materials p { margin: 0; line-height: 1.65; }
+.event-materials-links { display: flex; flex-wrap: wrap; gap: 8px 24px; margin: 12px 0; }
+.event-materials-links .text-link { min-height: 44px; margin: 0; overflow-wrap: anywhere; }
+.event-materials .event-materials-note { font-size: 13px; color: var(--silver-gray); }

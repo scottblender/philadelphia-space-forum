@@ -5,6 +5,8 @@ import type { ForumEvent } from "../data/events";
 import { getEventState } from "../lib/eventState";
 import { EventAttendance } from "./EventAttendance";
 import { RsvpForm } from "./RsvpForm";
+import { eventMaterials } from "../data/eventMaterials";
+import { EventMaterials } from "./EventMaterials";
 
 const stateLabels = { upcoming: "Upcoming", live: "Happening now", past: "Past event", cancelled: "Cancelled" };
 
@@ -63,6 +65,7 @@ export function EventCard({ event }: { event: ForumEvent }) {
           <h3>Event topics</h3>
           <ul>{event.topics.map((topic) => <li key={topic}>{topic}</li>)}</ul>
         </div>
+        {eventMaterials[event.id] && <EventMaterials eventId={event.id} materials={eventMaterials[event.id]} />}
       </div>
       <aside className="event-logistics" aria-label={`${event.title} time and location`}>
         <div>
