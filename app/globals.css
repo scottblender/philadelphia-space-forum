@@ -108,6 +108,10 @@ h2 em { color: var(--cyan-blue); font-weight: inherit; font-style: normal; }
 .event-card h2 { margin: 32px 0 20px; font-size: clamp(32px, 4.5vw, 48px); line-height: 1.1; font-weight: 600; letter-spacing: -.035em; }
 .event-synopsis, .event-speaker > p:last-child { font-size: 16px; line-height: 1.75; color: var(--silver-gray); margin: 0; }
 .event-host { margin: 20px 0 0; color: var(--pale-blue); font-size: 13px; line-height: 1.6; }
+.workshop-gallery { margin-top: 30px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.workshop-gallery figure { min-width: 0; margin: 0; }
+.workshop-gallery img { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border: 1px solid var(--line); background: var(--charcoal); }
+.workshop-gallery figcaption { margin-top: 9px; color: var(--silver-gray); font: 400 10px/1.5 var(--font-mono); }
 .event-speaker { margin-top: 32px; padding-top: 28px; border-top: 1px solid var(--line); }
 .event-speaker .eyebrow { margin-bottom: 12px; }
 .event-speaker h3 { font-size: 23px; margin: 0 0 12px; font-weight: 600; letter-spacing: -.02em; }

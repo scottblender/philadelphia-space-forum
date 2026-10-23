@@ -7,6 +7,7 @@ import { EventAttendance } from "./EventAttendance";
 import { RsvpForm } from "./RsvpForm";
 import { eventMaterials } from "../data/eventMaterials";
 import { EventMaterials } from "./EventMaterials";
+import { publicAsset } from "../lib/publicAsset";
 
 const stateLabels = { upcoming: "Upcoming", live: "Happening now", past: "Past event", cancelled: "Cancelled" };
 
@@ -46,6 +47,32 @@ export function EventCard({ event }: { event: ForumEvent }) {
         <h2 id={`${event.id}-title`}>{event.title}</h2>
         <p className="event-synopsis">{event.synopsis}</p>
         <p className="event-host">Hosted by {event.host}</p>
+        {event.id === "cislunar-space-workshop-2026-10-16" && (
+          <div className="workshop-gallery" role="group" aria-label="Photos from the Cislunar Space Fundamentals Workshop">
+            <figure>
+              <img
+                src={publicAsset("/workshops/cislunar-space-fundamentals/workshop-presentation.jpg")}
+                alt="Scott Blender standing beside the Cislunar Space Fundamentals presentation at Pennovation Center."
+                width={1050}
+                height={1400}
+                loading="lazy"
+                decoding="async"
+              />
+              <figcaption>Introducing cislunar space fundamentals</figcaption>
+            </figure>
+            <figure>
+              <img
+                src={publicAsset("/workshops/cislunar-space-fundamentals/workshop-participants.jpg")}
+                alt="Workshop participants seated around a table during the Cislunar Space Fundamentals Workshop."
+                width={1050}
+                height={1400}
+                loading="lazy"
+                decoding="async"
+              />
+              <figcaption>Participants working through the workshop together</figcaption>
+            </figure>
+          </div>
+        )}
         {event.speaker.name && <div className="event-speaker">
           <p className="eyebrow"><span /> {event.speaker.role}</p>
           <h3>{event.speaker.name}</h3>
