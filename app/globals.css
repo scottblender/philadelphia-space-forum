@@ -168,6 +168,11 @@ input:focus-visible, select:focus-visible, summary:focus-visible { outline: 2px 
 .team-member { min-width: 0; border-top: 1px solid var(--line); padding-top: 28px; display: flex; align-items: flex-start; gap: 24px; }
 .team-photo { flex: 0 0 160px; aspect-ratio: 3 / 4; overflow: hidden; border: 1px solid var(--line); background: var(--charcoal); }
 .team-photo img { display: block; width: 100%; height: 100%; object-fit: cover; }
+#partnerships { scroll-margin-top: var(--header-height); }
+.partner-card { flex-direction: column; }
+.partner-logo { display: grid; place-items: center; width: min(100%, 280px); height: 104px; padding: 14px; background: white; }
+.partner-logo img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.intro-links { display: flex; flex-wrap: wrap; gap: 8px 24px; }
 .team-copy { flex: 1; min-width: 0; }
 .team-copy .eyebrow { margin-bottom: 14px; font-size: 10px; }
 .team-copy h2 { margin: 0 0 16px; font-size: 28px; font-weight: 600; letter-spacing: -.025em; line-height: 1.1; }

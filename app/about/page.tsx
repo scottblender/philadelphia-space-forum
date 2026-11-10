@@ -28,7 +28,7 @@ export default function AboutPage() {
           {team.map((member) => <TeamMember key={member.id} member={member} />)}
         </div>
       </section>
-      <section className="page-width team-section" aria-labelledby="partnerships-label">
+      <section id="partnerships" className="page-width team-section" aria-labelledby="partnerships-label">
         <p className="eyebrow" id="partnerships-label"><span /> Partnerships</p>
         <div className="team-grid">
           {partners.map((partner) => <PartnerCard key={partner.id} partner={partner} />)}
